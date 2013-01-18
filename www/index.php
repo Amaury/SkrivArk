@@ -1,0 +1,1 @@
+/opt/finemedia/temma/www/index.php

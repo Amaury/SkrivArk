@@ -1,0 +1,26 @@
+=SkrivArk=
+
+SkrivArk (or simply "Ark") is a new kind of wiki software. It's a simple tool to create hierarchical pages of text.
+
+==Install==
+SkrivArk is developed on top of the [[http://github.com/Amaury/Temma|Temma]] framework and the [[http://github.com/Amaury/FineBase|FineBase]] library.
+
+You'll also need a MySQL database. Use the **etc/database.sql** file to create it.
+
+Adapt the **etc/temma.json** configuration file.
+
+==Test it==
+There is a demonstration site: [[http://arkdemo.skriv.org]]
+* login: demo@demo.com
+* password: demo
+
+==License==
+This project was created by Amaury Bouchard (amaury@amaury.net), based on [[http://github.com/Amaury/SkrivMarkup|SkrivMarkup]], [[http://github.com/Amaury/Temma|Temma]], [[http://github.com/Amaury/FineBase|FineBase]] and [[http://github.com/twitter/bootstrap|Bootstrap]].
+
+It is cross-licensed under the terms of two licenses:
+* [[http://www.gnu.org/licenses/gpl.html|GNU General Public License]], version 3 or above
+* [[http://freedomdefined.org/Licenses/CC-BY-SA|Creative Commons BY-SA]], version 3.0 or above
+
+All files are provided "AS IS", without any warranty.
+
+Copyright © 2013, Amaury Bouchard

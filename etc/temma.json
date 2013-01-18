@@ -1,0 +1,21 @@
+{
+	"application": {
+		"dataSources": {
+			"_db": "mysqli://skrivark:skrivark@localhost/skrivark",
+			"_cache": "memcache://localhost:11211"
+		},
+		"sessionName": "SkrivArkSession",
+		"sessionSource": "_cache",
+		"rootController": "PageController"
+	},
+	"loglevels": {
+		"finebase": "DEBUG",
+		"temma": "DEBUG",
+		"skriv": "DEBUG"
+	},
+	"plugins": {
+		"_pre": [
+			"IdentificationController"
+		]
+	}
+}
