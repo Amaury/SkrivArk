@@ -5,7 +5,14 @@ SkrivArk (or simply "Ark") is a new kind of wiki software. It's a simple tool to
 ==Install==
 SkrivArk is developed on top of the [[http://github.com/Amaury/Temma|Temma]] framework and the [[http://github.com/Amaury/FineBase|FineBase]] library.
 
-You'll also need a MySQL database. Use the **etc/database.sql** file to create it.
+You'll also need a MySQL database. Use the **etc/database.sql** file to create it.%%%
+Then create an administrator user by running this requestSQL :
+ INSERT INTO User
+ SET admin = TRUE,
+     name = 'Your name',
+     email = 'your.email@domain.com',
+     password = MD5('your password'),
+     creationDate = NOW();
 
 Adapt the **etc/temma.json** configuration file.
 

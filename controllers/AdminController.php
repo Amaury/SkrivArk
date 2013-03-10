@@ -42,7 +42,7 @@ class AdminController extends \Temma\Controller {
 				'admin'		=> $admin,
 				'name'		=> $name,
 				'email'		=> $email,
-				'password'	=> $password,
+				'password'	=> md5($password),
 				'creationDate'	=> date('c')
 			));
 		} catch (Exception $e) { }

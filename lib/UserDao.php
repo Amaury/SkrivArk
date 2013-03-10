@@ -24,7 +24,7 @@ class UserDao extends \Temma\Dao {
 	public function getFromCredentials($email, $password) {
 		FineLog::log('skriv', 'DEBUG', "Get from credentials '$email' - '$password'.");
 		$criteria = $this->criteria()->equal('email', $email)
-					     ->equal('password', $password);
+					     ->equal('password', md5($password));
 		$user = $this->search($criteria, null, null, 1);
 		if (isset($user[0]))
 			return ($user[0]);
