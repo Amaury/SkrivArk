@@ -49,12 +49,13 @@ class PageController extends \Temma\Controller {
 	}
 	/**
 	 * Show the edition form.
-	 * @param	int	$id	Identifier of the page to modify.
+	 * @param	int	$id		Identifier of the page to modify.
+	 * @param	int	$versionId	(optional) Identifier of the version to edit.
 	 */
-	public function execEdit($id) {
+	public function execEdit($id, $versionId=null) {
 		FineLog::log('skriv', 'DEBUG', "Edit action ($id).");
 		// get page's data
-		$page = $this->_pageDao->get($id);
+		$page = $this->_pageDao->get($id, $versionId);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
 		$this->set('editContent', $this->_session->get('editContent'));
 		$this->_session->set('editContent', null);
@@ -75,13 +76,7 @@ class PageController extends \Temma\Controller {
 		}
 		$html = $this->_render($_POST['content']);
 		$user = $this->get('user');
-		$this->_pageDao->update($id, array(
-			'title'		=> $title,
-			'skriv'		=> $_POST['content'],
-			'html'		=> $html,
-			'modifierId'	=> $user['id'],
-			'modifDate'	=> date('c')
-		));
+		$this->_pageDao->addVersion($id, $user['id'], $title, $_POST['content'], $html);
 		$this->redirect("/page/show/$id");
 	}
 	/**
@@ -92,7 +87,8 @@ class PageController extends \Temma\Controller {
 		$parentPage = $this->_pageDao->get($parentId);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($parentPage);
 		$breadcrumb = is_array($breadcrumb) ? $breadcrumb : array();
-		$breadcrumb[] = $parentPage;
+		if (isset($parentPage))
+			$breadcrumb[] = $parentPage;
 		$this->set('editContent', $this->_session->get('editContent'));
 		$this->_session->set('editContent', null);
 		$this->set('page', $page);
@@ -114,15 +110,16 @@ class PageController extends \Temma\Controller {
 		}
 		$html = $this->_render($_POST['content']);
 		$user = $this->get('user');
-		$id = $this->_pageDao->create(array(
-			'title'		=> $title,
-			'skriv'		=> $_POST['content'],
-			'html'		=> $html,
-			'creatorId'	=> $user['id'],
-			'creationDate'	=> date('c'),
-			'parentPageId'	=> $parentId
-		));
+
+		$id = $this->_pageDao->add($parentId, $user['id'], $title, $_POST['content'], $html);
 		$this->redirect("/page/show/$id");
+	}
+	/** Convert a SkrivML text into HTML (used in edit page). */
+	public function execConvert() {
+		FineLog::log('skriv', 'INFO', "Convert action.");
+		$html = $this->_render($_POST['text']);
+		print($html);
+		return (self::EXEC_QUIT);
 	}
 	/**
 	 * Remove a page.
@@ -146,6 +143,79 @@ class PageController extends \Temma\Controller {
 		$this->_pageDao->setPriorities($id, $_POST['prio']);
 		$this->view('\Temma\Views\JsonView');
 		$this->set('json', 1);
+	}
+	/**
+	 * Shows the list of versions of a page.
+	 * @param	int	$id		Page's identifier.
+	 * @param	int	$versionFrom	(optional) Identifier of the first version to compare.
+	 * @param	int	$versionTo	(optional) Identifier of the second version to compare.
+	 */
+	public function execVersions($id, $versionFrom=null, $versionTo=null) {
+		FineLog::log('skriv', 'DEBUG', "Versions action.");
+		if ((isset($versionFrom) && !isset($versionTo)) ||
+		    (!isset($versionFrom) && isset($versionTo)) ||
+		    (isset($versionFrom) && !is_numeric($versionTo)) ||
+		    (isset($versionTo) && !is_numeric($versionTo))) {
+			$this->redirect("/page/versions/$id");
+			return (self::EXEC_HALT);
+		}
+		if (isset($versionFrom) && isset($versionTo) && $versionFrom < $versionTo) {
+			$this->redirect("/page/versions/$id/$versionTo/$versionFrom");
+			return (self::EXEC_HALT);
+		}
+		// fetch data, from the 'show' action
+		$res = $this->execShow($id);
+		if ($res != self::EXEC_FORWARD)
+			return ($res);
+		// get the list of versions
+		$versions = $this->_pageDao->getVersions($id);
+		$this->set('versions', $versions);
+		if ((isset($versionFrom) && !isset($versions[$versionFrom])) ||
+		    (isset($versionTo) && !isset($versions[$versionTo]))) {
+			$this->redirect("/page/versions/$id");
+			return (self::EXEC_HALT);
+		}
+		if (!isset($versionFrom)) {
+			foreach ($versions as $subId => $subVal) {
+				if (!isset($versionFrom)) {
+					$versionFrom = $subId;
+					continue;
+				}
+				if (!isset($versionTo))
+					$versionTo = $subId;
+				break;
+			}
+			$this->redirect("/page/versions/$id/$versionFrom/$versionTo");
+			return (self::EXEC_HALT);
+		}
+		// version numbers
+		$this->set('versionFrom', $versionFrom);
+		$this->set('versionTo', $versionTo);
+		// get versions for diff
+		$sql = "SELECT	pageFrom.title AS fromTitle,
+				pageFrom.skriv AS fromSkriv,
+				pageTo.title AS toTitle,
+				pageTo.skriv AS toSkriv
+			FROM PageVersion pageFrom
+				INNER JOIN PageVersion pageTo ON (pageFrom.pageId = pageTo.pageId)
+			WHERE pageFrom.id = '" . $this->_db->quote($versionFrom) . "'
+			  AND pageTo.id = '" . $this->_db->quote($versionTo) . "'";
+		$versions = $this->_db->queryOne($sql);
+		require_once('finediff.php');
+		// compare titles
+		$fromTitle = mb_convert_encoding($versions['toTitle'], 'HTML-ENTITIES', 'UTF-8');
+		$toTitle = mb_convert_encoding($versions['fromTitle'], 'HTML-ENTITIES', 'UTF-8');
+		$finediff = new FineDiff($fromTitle, $toTitle, FineDiff::$wordGranularity);
+		$diffResult = $finediff->renderDiffToHTML();
+		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
+		$this->set('titleDiff', $diffResult);
+		// compare texts
+		$fromText = mb_convert_encoding($versions['toSkriv'], 'HTML-ENTITIES', 'UTF-8');
+		$toText = mb_convert_encoding($versions['fromSkriv'], 'HTML-ENTITIES', 'UTF-8');
+		$finediff = new FineDiff($fromText, $toText, FineDiff::$wordGranularity);
+		$diffResult = $finediff->renderDiffToHTML();
+		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
+		$this->set('skrivDiff', $diffResult);
 	}
 
 	/* *********** PRIVATE METHODS ************* */

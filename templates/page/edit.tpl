@@ -1,46 +1,162 @@
-{include file="inc.header.tpl"}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>{if $conf.title}{$conf.title|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}</title>
+	{* bootstrap *}
+	<link href="/css/bootstrap-2.2.2.min.css" rel="stylesheet" media="screen" />
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	{if $prettyprint}
+		{* Google prettyprint *}
+		<link href="/css/prettify.css" type="text/css" rel="stylesheet" />
+		<script src="/js/prettify.js" type="text/javascript"></script>
+	{/if}
+	{*<link href="/css/style.css" rel="stylesheet" media="screen" />*}
+	<style type="text/css">{literal}
+		html, body {
+			background-color: #eaeaea;
+			margin: 0;
+			border: 0;
+			position: absolute;
+			left: 0;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			height: 100%;
+		}
+		div#breadcrumb {
+			position: absolute;
+			top: 50px;
+		}
+		div#title {
+			position: absolute;
+			top: 96px;
+			width: 40%;
+		}
+		div#body-content {
+			position: absolute;
+			top: 118px;
+			bottom: 5px;
+			left: 0;
+			right: 0;
+		}
+		/* textarea */
+		textarea#skrivtext {
+			position: absolute;
+			font-family: monospace;
+			margin: 1%;
+			width: 48%;
+			left: 0;
+			top: 0;
+			bottom: 0;
+			color: #000;
+		}
+		/* content */
+		div#skrivhtml {
+			position: absolute;
+			overflow: auto;
+			margin: 1%;
+			width: 46%;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			border: 1px solid #000;
+			padding: 1%;
+			background-color: #fff;
+		}
+		div#skrivhtml h1 {
+			margin-top: 1em;
+		}
+		/* table */
+		div#skrivhtml table.bordered {
+			border: 1px solid #888;
+		}
+		div#skrivhtml table.bordered th {
+			border: 1px solid #888;
+			padding: 3px;
+			background-color: #eee;
+		}
+		div#skrivhtml table.bordered td {
+			border: 1px solid #888;
+			padding: 3px;
+		}
+		/* footnotes */
+		div#skrivhtml div.footnotes {
+			margin-top: 2em;
+			border-top: 1px dashed #aaa;
+			padding-top: 1em;
+		}
+		div#skrivhtml div.footnotes p.footnote {
+			margin: 0;
+			font-size: 0.9em;
+		}
+	{/literal}</style>
+</head>
+<body {if $prettyprint}onload="prettyPrint()"{/if}>
 
-<div class="container">
-	{* breadcrumb *}
+<div class="navbar navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container-fluid">
+			<a class="brand" href="/">{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}</a>
+			<ul class="nav">
+				{if $user.admin}
+					<li {if $CONTROLLER == "admin"}class="active"{/if}><a href="/admin">Admin</a></li>
+				{/if}
+				<li><a href="#" onclick="$('#form').submit()">Save modifications</a></li>
+			</ul>
+			<ul class="nav pull-right">
+				<li><a href="/identification/account">My account</a></li>
+				<li><a href="/identification/logout">Logout</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+
+<div id="breadcrumb" class="container-fluid">
 	<ul class="breadcrumb">
-		<li><a href="/"><i class="icon-home"></i></a>{if $breadcrumb} <span class="divider">/</span>{/if}</li>
+		<li><a href="/" title="Back to home page"><i class="icon-home"></i></a>{if $breadcrumb || $page} <span class="divider">/</span>{/if}</li>
 		{foreach name=breadcrumb from=$breadcrumb item=crumb}
 			<li>
 				<a href="/page/show/{$crumb.id}">{$crumb.title|escape}</a>
 				<span class="divider">/</span>
 			</li>
 		{/foreach}
-		<li><a href="/page/show/{$page.id}"><strong>{$page.title|escape}</strong></a></li>
-	</ul>
-	<h1>
-		{if $ACTION == 'create'}
-			Creation
-		{else}
-			Edition
-			{if $page.modifierId}
-				<small>Last edition by {$page.modifierName|escape} on {$page.modifDate}</small>
-			{else}
-				<small>Created by {$page.creatorName|escape} on {$page.creationDate}</small>
-			{/if}
+		{if $page}
+			<li title="{if $page.nbrVersions > 1}Last edition by {$page.modifierName|escape} on {$page.modifDate}{else}Created by {$page.creatorName|escape} on {$page.creationDate}{/if}"><a href="/page/show/{$page.id}"><strong>{$page.title|escape}</strong></a></li>
 		{/if}
-	</h1>
-	<div class="well">
-		<form method="post"
-		 {if $page}
-			action="/page/storeEdit/{$page.id}"
-		 {else}
-			action="/page/storeCreate/{$parentId}"
-		 {/if}>
-			<div>
-				<input type="text" name="title" value="{$page.title|escape}" placeholder="Title" autocomplete="off" style="width: 99%;" />
-			</div>
-			<textarea name="content" placeholder="Content" style="width: 99%; max-width: 99%; min-height: 5em; max-height: 60em; height: 30em;">{if $editContent}{$editContent}{else}{$page.skriv}{/if}</textarea>
-			<div class="clearfix">
-				<input type="submit" value="Save" class="btn btn-primary btn-large pull-right" />
-				<a href="/page/show/{$page.id}" class="btn btn-inverse pull-right" style="margin-right: 1em;">Cancel</a>
-			</div>
-		</form>
-	</div>
+	</ul>
 </div>
 
-{include file="inc.footer.tpl"}
+<form id="form" method="post"
+ {if $page}
+	action="/page/storeEdit/{$page.id}"
+ {else}
+	action="/page/storeCreate/{$parentId}"
+ {/if}>
+	<div id="title" class="container-fluid">
+		<input type="text" name="title" value="{$page.title|escape}" placeholder="Title" autocomplete="off" style="width: 99%;" />
+	</div>
+
+	<div id="body-content">
+		<textarea id="skrivtext" name="content">{if $editContent}{$editContent}{else}{$page.skriv}{/if}</textarea>
+		<div id="skrivhtml">{$page.html}</div>
+	</div>
+</form>
+
+<script type="text/javascript">{literal}<!--
+	var timer = null;
+	// met le focus sur la zone de texte
+	$("#skrivtext").focus();
+	// événement sur la modification de la zone de texte
+	$("#skrivtext").bind("input propertychange", function() {
+		if (timer)
+			clearTimeout(timer);
+		timer = setTimeout(function() {
+			var text = $("#skrivtext").val();
+			var url = "/page/convert";
+			$("#skrivhtml").load(url, {text: text});
+		}, 300);
+	});
+//-->{/literal}</script>
+
+</body>
+</html>

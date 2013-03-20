@@ -31,12 +31,15 @@ class AdminController extends \Temma\Controller {
 		$name = trim($_POST['name']);
 		$email = trim($_POST['email']);
 		$password = trim($_POST['password']);
-		$admin = ($_POST['admin'] == 1) ? 1 : 0;
+		$admin = ($_POST['admin'] == '1') ? 1 : 0;
+		$generate = ($_POST['generate'] == '1') ? true : false;
 		$this->redirect('/admin');
 		// data verification
-		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || empty($password))
+		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || (!$generate && empty($password)))
 			return (self::EXEC_HALT);
 		// creation
+		if ($generate)
+			$password = substr(md5(time() . mt_rand()), 0, 6);
 		try {
 			$this->_userDao->create(array(
 				'admin'		=> $admin,
@@ -46,6 +49,31 @@ class AdminController extends \Temma\Controller {
 				'creationDate'	=> date('c')
 			));
 		} catch (Exception $e) { }
+		if (!$generate)
+			return;
+		// send an email
+		$currentUser = $this->get('user');
+		$conf = $this->get('conf');
+		$headers = "MIME-Version: 1.0\r\n" .
+			   "Content-type: text/html; charset=utf8\r\n" .
+			   "From: " . $currentUser['name'] . "<" . $currentUser['email'] . ">";
+		$msg = "<html><body>
+				<h1>" . htmlspecialchars($conf['sitename']) . "</h1>
+				<p>Hi " . htmlspecialchars($name) . ",</p>
+				<p>
+					" . htmlspecialchars($currentUser['name']) . " has created an account for you on the
+					<a href=\"" . htmlspecialchars($conf['baseURL']) . "\">" . htmlspecialchars($conf['sitename']) . "</a> site.
+				</p>
+				<p>
+					Your temporary password is <strong>" . htmlspecialchars($password) . "</strong>
+				</p>
+				<p>
+					Best regards,<br />
+					The Skriv Team
+				</p>
+			</body></html>";
+		// send email
+		mail($email, '[' . $conf['sitename'] . '] Account Creation', $msg, $headers);
 	}
 	/**
 	 * Change user admin status.

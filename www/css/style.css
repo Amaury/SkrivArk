@@ -69,3 +69,13 @@ h2 {
 #content h2:not(:first-child) {
 	margin-top: 1em;
 }
+
+/* ******* DIFF ********** */
+del {
+	text-decoration: line-through;
+	background-color: #ffdddd;
+}
+ins {
+	text-decoration: none;
+	background-color: #ddffdd;
+}

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>SkrivArk{if $page}: {$page.title|escape}{/if}</title>
+	<title>{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}</title>
 	{* bootstrap *}
 	<link href="/css/bootstrap-2.2.2.min.css" rel="stylesheet" media="screen" />
 	{* jQuery *}

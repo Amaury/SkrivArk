@@ -54,5 +54,36 @@ class IdentificationController extends \Temma\Controller {
 		$this->_session->set('user', null);
 		$this->redirect('/');
 	}
+	/** Account page. */
+	public function execAccount() {
+		FineLog::log('skriv', 'DEBUG', "Account action.");
+	}
+	/** Modify an account. */
+	public function execUpdateAccount() {
+		FineLog::log('skriv', 'DEBUG', "UpdateAccount action.");
+		$name = trim($_POST['name']);
+		$email = trim($_POST['email']);
+		$password = trim($_POST['password']);
+		$password2 = trim($_POST['password2']);
+		$this->redirect('/identification/account');
+		// date verification
+		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false ||
+		    (!empty($password) && !empty($password2) && $password !== $password2))
+			return (self::EXEC_HALT);
+		// update
+		$data = array(
+			'name'	=> $name,
+			'email'	=> $email
+		);
+		if (!empty($password) && $password === $password2)
+			$data['password'] = md5($password);
+		$currentUser = $this->get('user');
+		try {
+			$userDao = $this->loadDao('UserDao');
+			$userDao->update($currentUser['id'], $data);
+			$currentUser = $userDao->get($currentUser['id']);
+			$this->_session->set('user', $currentUser);
+		} catch (Exception $e) { }
+	}
 }
 

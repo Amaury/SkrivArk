@@ -1,10 +1,10 @@
 {
 	"application": {
 		"dataSources": {
-			"_db": "mysqli://skrivark:skrivark@localhost/skrivark",
+			"_db": "mysqli://arkdev:arkdev@localhost/arkdev",
 			"_cache": "memcache://localhost:11211"
 		},
-		"sessionName": "SkrivArkSession",
+		"sessionName": "ArkDevSession",
 		"sessionSource": "_cache",
 		"rootController": "PageController"
 	},
@@ -17,5 +17,9 @@
 		"_pre": [
 			"IdentificationController"
 		]
+	},
+	"autoimport": {
+		"sitename": "SkrivArk",
+		"baseURL": "http://arkdev.skriv.org"
 	}
 }
