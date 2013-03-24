@@ -1,5 +1,7 @@
 {include file="inc.header.tpl"}
 
+{include file="page/inc.modal-move.tpl"}
+
 <div class="container-fluid">
 	<div class="row-fluid">
 		{* left column *}

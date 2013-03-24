@@ -177,5 +177,23 @@ class PageDao extends \Temma\Dao {
 			$prio++;
 		}
 	}
+	/**
+	 * Move a page.
+	 * @param	int	$pageId		Page identifier.
+	 * @param	int	$destinationId	Destination page identifier.
+	 */
+	public function move($pageId, $destinationId) {
+		$destinationId = $this->_db->quote($destinationId);
+		$sql = "SELECT IFNULL(MAX(priority), -1) AS prio
+			FROM Page
+			WHERE parentPageId = '$destinationId'";
+		$result = $this->_db->queryOne($sql);
+		$prio = $result['prio'] + 1;
+		$sql = "UPDATE Page
+			SET parentPageId = '$destinationId',
+			    priority = $prio
+			WHERE id = '" . $this->_db->quote($pageId) . "'";
+		$this->_db->exec($sql);
+	}
 }
 

@@ -30,7 +30,6 @@
 		div#title {
 			position: absolute;
 			top: 96px;
-			width: 40%;
 		}
 		div#body-content {
 			position: absolute;
@@ -101,7 +100,6 @@
 				{if $user.admin}
 					<li {if $CONTROLLER == "admin"}class="active"{/if}><a href="/admin">Admin</a></li>
 				{/if}
-				<li><a href="#" onclick="$('#form').submit()">Save modifications</a></li>
 			</ul>
 			<ul class="nav pull-right">
 				<li><a href="/identification/account">My account</a></li>
@@ -132,8 +130,12 @@
  {else}
 	action="/page/storeCreate/{$parentId}"
  {/if}>
-	<div id="title" class="container-fluid">
-		<input type="text" name="title" value="{$page.title|escape}" placeholder="Title" autocomplete="off" style="width: 99%;" />
+	<div style="position: absolute; top: 96px; left: 0; right: 0;">
+		<div class="container-fluid">
+			<input id="edit-title" type="text" name="title" value="{$page.title|escape}" placeholder="Title" autocomplete="off" style="width: 48%;" />
+			<input type="submit" class="btn btn-primary" value="{if $ACTION == "create"}Create the page{else}Save modifications{/if}" style="margin: -10px 0 0 10px;" />
+			<a href="/page/show/{if $page}{$page.id}{else}{$parentId}{/if}" class="btn" style="margin: -10px 0 0 5px;">Cancel</a>
+		</div>
 	</div>
 
 	<div id="body-content">
@@ -144,9 +146,12 @@
 
 <script type="text/javascript">{literal}<!--
 	var timer = null;
-	// met le focus sur la zone de texte
-	$("#skrivtext").focus();
-	// événement sur la modification de la zone de texte
+	// put focus on input zone
+	if (!$("#edit-title").val().length)
+		$("#edit-title").focus();
+	else
+		$("#skrivtext").focus();
+	// text modification event
 	$("#skrivtext").bind("input propertychange", function() {
 		if (timer)
 			clearTimeout(timer);

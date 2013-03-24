@@ -2,6 +2,9 @@
 	{if $page}
 		<a href="/page/show/{$page.parentPageId}" class="btn btn-info" title="Go to parent page"><i class="icon-arrow-up"></i></a>
 		<a href="/page/edit/{$page.id}" class="btn btn-warning pull-right" style="margin-left: 0.5em;" title="Edit this page"><i class="icon-pencil"></i></a>
+		{if $ACTION != "versions"}
+			<button class="btn btn-inverse pull-right" style="margin-left: 0.5em;" title="Move this page" onclick="$('#modal-move').modal('show')"><i class="icon-move icon-white"></i></button>
+		{/if}
 		{if !$subPages}
 			<a href="/page/remove/{$page.id}" onclick="return confirm('Delete this page?')" class="btn btn-danger pull-right" style="margin-left: 0.5em;" title="Delete this page"><i class="icon-trash"></i></a>
 		{/if}
@@ -56,8 +59,10 @@
 	<div style="margin-left: 5em; font-size: 0.7em; color: #888;">
 		<i class="icon-plus"></i> Version of reference<br />
 		<i class="icon-minus"></i> Compared version<br />
-		<i class="icon-map-marker"></i> Use this version as comparison reference<br />
-		<i class="icon-hand-up"></i> Click on a version to use it for comparison<br />
+		{if $versions|@count > 2}
+			<i class="icon-map-marker"></i> Use this version as comparison reference<br />
+			<i class="icon-hand-up"></i> Click on a version to use it for comparison<br />
+		{/if}
 		<i class="icon-pencil"></i> Edit the page from this version
 	</div>
 {elseif $subPages}

@@ -46,6 +46,30 @@ class PageController extends \Temma\Controller {
 		$subPages = $this->_pageDao->getSubPages($id);
 		$this->set('page', $page);
 		$this->set('subPages', $subPages);
+		// get level 0 subpages (for page move)
+		$level0 = $this->_pageDao->getSubPages(0);
+		$this->set('subLevelPages', $level0);
+	}
+	/**
+	 * Returns a chunk of HTML, to select a subpage for moving a page.
+	 * @param	int	$pageId		Current page idnetifier.
+	 * @param	int	$parentId	Parent level identifier.
+	 */
+	public function execGetSubLevels($pageId, $parentLevelId=0) {
+		FineLog::log('skriv', 'INFO', "GetSubLevels action.");
+		$this->set('page', array('id' => $pageId));
+		$this->set('parentSubLevelId', $parentLevelId);
+		$sub = $this->_pageDao->getSubPages($parentLevelId);
+		$this->set('subLevelPages', $sub);
+	}
+	/**
+	 * Move a page.
+	 * @param	int	$id		Page identifier.
+	 * @param	int	$destinationId	Destination page identifier.
+	 */
+	public function execMove($id, $destinationId) {
+		$this->_pageDao->move($id, $destinationId);
+		$this->redirect("/page/show/$id");
 	}
 	/**
 	 * Show the edition form.
