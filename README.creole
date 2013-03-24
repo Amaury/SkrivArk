@@ -5,7 +5,9 @@ SkrivArk (or simply "Ark") is a new kind of wiki software. It's a simple tool to
 ==Install==
 SkrivArk is developed on top of the [[http://github.com/Amaury/Temma|Temma]] framework and the [[http://github.com/Amaury/FineBase|FineBase]] library.
 
-You'll also need a MySQL database. Use the **etc/database.sql** file to create it.
+You'll also need a MySQL database and a Memcache server.
+
+Use the **etc/database.sql** file to create the database.
 
 Then create an administrator user by running this SQL request :
 {{{
@@ -17,9 +19,12 @@ SET admin = TRUE,
     creationDate = NOW();
 }}}
 
-Adapt the **etc/temma.json** configuration file, to define the database DSN.
+Adapt the **etc/temma.json** configuration file, to define the database DSN and the cache DSN.
 
-Create 'log/' and 'tmp/' directories, and set them with full read-write access for all ('chmod 777').
+Set full read-write access to 'log/' and 'tmp/' directories:
+{{{
+chmod 777 log tmp
+}}}
 
 ==Test it==
 There is a demonstration site: [[http://arkdemo.skriv.org]]
