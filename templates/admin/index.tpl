@@ -39,7 +39,7 @@ var adm = new function() {
 //-->{/literal}</script>
 
 <div class="container">
-	<h1>Users</h1>
+	<h2>Users <small>management</small></h2>
 	<table class="table">
 		<thead>
 			<tr>
@@ -85,6 +85,15 @@ var adm = new function() {
 			</div>
 		</form>
 	</div>
+
+	<h2>Database <small>download</small></h2>
+	<form method="get" action="/admin/export" class="form-inline">
+		<select name="format" onchange="if (this.value == 'html' && !$('#check-zip').is(':checked')) $('#check-zip').attr('checked', 'checked');">
+			<option value="sql">SQL - full database</option>
+			<option value="html">HTML only + ZIP</option>
+		</select>
+		<input type="submit" class="btn btn-primary" value="Download" />
+	</form>
 </div>
 
 {include file="inc.footer.tpl"}
