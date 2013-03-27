@@ -41,6 +41,13 @@
 				<div id="content" class="well">
 					{$page.html}
 				</div>
+				{* subscription *}
+				<form class="form-inline">
+					<label class="checkbox">
+						<input type="checkbox" {if $page.subscribed}checked="checked"{/if} onchange="ark.pageSubscription({$page.id}, $(this).is(':checked'))" />
+						Warn me when this page is modified
+					</label>
+				</form>
 			{/if}
 		</div>
 	</div>

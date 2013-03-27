@@ -39,7 +39,8 @@ class PageController extends \Temma\Controller {
 			return (self::EXEC_HALT);
 		}
 		// get page's data
-		$page = $this->_pageDao->get($id);
+		$user = $this->get('user');
+		$page = $this->_pageDao->get($id, null, $user['id']);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
 		$this->set('breadcrumb', $breadcrumb);
 		// get subpages
@@ -99,8 +100,35 @@ class PageController extends \Temma\Controller {
 			return (self::EXEC_HALT);
 		}
 		$html = $this->_render($_POST['content']);
-		$user = $this->get('user');
-		$this->_pageDao->addVersion($id, $user['id'], $title, $_POST['content'], $html);
+		$currentUser = $this->get('user');
+		// update the page
+		$this->_pageDao->addVersion($id, $currentUser['id'], $title, $_POST['content'], $html);
+		// warn all subscribers
+		$subscribers = $this->_pageDao->getSubscribers($id, $currentUser['id']);
+		if (!empty($subscribers)) {
+			$conf = $this->get('conf');
+			$recipients = array();
+			foreach ($subscribers as $subscriber)
+				$recipients[] = $subscriber['email'];
+			$headers = "MIME-Version: 1.0\r\n" .
+				   "Content-type: text/html; charset=utf8\r\n" .
+				   "From: " . $conf['emailSender'] . "\r\n" .
+				   "Bcc: " . implode(',', $recipients);
+			$msg = "<html><body>
+					<h1>" . htmlspecialchars($conf['sitename']) . "</h1>
+					<p>Hi,</p>
+					<p>
+						" . htmlspecialchars($currentUser['name']) . " has modified the page
+						«&nbsp;<em><a href=\"" . htmlspecialchars($conf['baseURL']) . "/page/show/$id\">". htmlspecialchars($title) . "</a></em>&nbsp;».
+					</p>
+					<p>
+						Best regards,<br />
+						The Skriv Team
+					</p>
+				</body></html>";
+			mail(null, '[' . $conf['sitename'] . '] Page Modification', $msg, $headers);
+		}
+		// redirection
 		$this->redirect("/page/show/$id");
 	}
 	/**
@@ -133,9 +161,37 @@ class PageController extends \Temma\Controller {
 			return (self::EXEC_HALT);
 		}
 		$html = $this->_render($_POST['content']);
-		$user = $this->get('user');
-
-		$id = $this->_pageDao->add($parentId, $user['id'], $title, $_POST['content'], $html);
+		$currentUser = $this->get('user');
+		// create the new page
+		$id = $this->_pageDao->add($parentId, $currentUser['id'], $title, $_POST['content'], $html);
+		// is there subscribers to the parent page?
+		if ($parentId) {
+			$subscribers = $this->_pageDao->getSubscribers($parentId, $currentUser['id']);
+			if (!empty($subscribers)) {
+				$conf = $this->get('conf');
+				$recipients = array();
+				foreach ($subscribers as $subscriber)
+					$recipients[] = $subscriber['email'];
+				$headers = "MIME-Version: 1.0\r\n" .
+					   "Content-type: text/html; charset=utf8\r\n" .
+					   "From: " . $conf['emailSender'] . "\r\n" .
+					   "Bcc: " . implode(',', $recipients);
+				$msg = "<html><body>
+						<h1>" . htmlspecialchars($conf['sitename']) . "</h1>
+						<p>Hi,</p>
+						<p>
+							" . htmlspecialchars($currentUser['name']) . " has created the page
+							«&nbsp;<em><a href=\"" . htmlspecialchars($conf['baseURL']) . "/page/show/$id\">". htmlspecialchars($title) . "</a></em>&nbsp;».
+						</p>
+						<p>
+							Best regards,<br />
+							The Skriv Team
+						</p>
+					</body></html>";
+				mail(null, '[' . $conf['sitename'] . '] Page Creation', $msg, $headers);
+			}
+		}
+		// redirection
 		$this->redirect("/page/show/$id");
 	}
 	/** Convert a SkrivML text into HTML (used in edit page). */
@@ -156,7 +212,35 @@ class PageController extends \Temma\Controller {
 			$this->redirect("/page/show/$id");
 			return (self::EXEC_HALT);
 		}
+		// warn all subscribers
+		$currentUser = $this->get('user');
+		$subscribers = $this->_pageDao->getSubscribers($id, $currentUser['id']);
+		if (!empty($subscribers)) {
+			$conf = $this->get('conf');
+			$recipients = array();
+			foreach ($subscribers as $subscriber)
+				$recipients[] = $subscriber['email'];
+			$headers = "MIME-Version: 1.0\r\n" .
+				   "Content-type: text/html; charset=utf8\r\n" .
+				   "From: " . $conf['emailSender'] . "\r\n" .
+				   "Bcc: " . implode(',', $recipients);
+			$msg = "<html><body>
+					<h1>" . htmlspecialchars($conf['sitename']) . "</h1>
+					<p>Hi,</p>
+					<p>
+						" . htmlspecialchars($currentUser['name']) . " has removed the page
+						«&nbsp;<em>". htmlspecialchars($page['title']) . "</em>&nbsp;».
+					</p>
+					<p>
+						Best regards,<br />
+						The Skriv Team
+					</p>
+				</body></html>";
+			mail(null, '[' . $conf['sitename'] . '] Page Deleted', $msg, $headers);
+		}
+		// remove the page
 		$this->_pageDao->remove($id);
+		// redirection
 		$this->redirect("/page/show/" . $page['parentPageId']);
 	}
 	/**
@@ -166,6 +250,17 @@ class PageController extends \Temma\Controller {
 	public function execSetPriorities($id) {
 		$this->_pageDao->setPriorities($id, $_POST['prio']);
 		$this->view('\Temma\Views\JsonView');
+		$this->set('json', 1);
+	}
+	/**
+	 * Manage page subscription.
+	 * @param	int	$pageId		Page's identifier.
+	 * @param	int	$subscribed	1 if the user subscribed to the page.
+	 */
+	public function execSubscription($pageId, $subscribed) {
+		$user = $this->get('user');
+		$this->_pageDao->subscription($user['id'], $pageId, ($subscribed ? true : false));
+		$this->view('\Temma\View\JsonView');
 		$this->set('json', 1);
 	}
 	/**

@@ -56,7 +56,7 @@ class AdminController extends \Temma\Controller {
 		$conf = $this->get('conf');
 		$headers = "MIME-Version: 1.0\r\n" .
 			   "Content-type: text/html; charset=utf8\r\n" .
-			   "From: " . $currentUser['name'] . "<" . $currentUser['email'] . ">";
+			   "From: " . $conf['emailSender'];
 		$msg = "<html><body>
 				<h1>" . htmlspecialchars($conf['sitename']) . "</h1>
 				<p>Hi " . htmlspecialchars($name) . ",</p>

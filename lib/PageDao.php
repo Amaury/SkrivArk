@@ -19,23 +19,28 @@ class PageDao extends \Temma\Dao {
 	 * Returns a page.
 	 * @param	int	$id		Page's identifier.
 	 * @param	int	$versionId	(optional) Identifier of the version to fetch.
+	 * @param	int	$userId		(optional) If given, fetch the user's subscription on the page.
 	 * @return	array	Hash.
 	 */
-	public function get($id, $versionId=null) {
+	public function get($id, $versionId=null, $userId=0) {
 		$sql = "SELECT	Page.*,
 				PageVersion.skriv,
 				(SELECT COUNT(*) FROM PageVersion WHERE pageId = Page.id) AS nbrVersions,
 				creator.name AS creatorName,
-				modifier.name AS modifierName
-			FROM Page
+				modifier.name AS modifierName ";
+		if ($userId)
+			$sql .= ", IF(Subscription.id, 1, 0) AS subscribed ";
+		$sql .= "FROM Page
 				INNER JOIN User creator ON (creator.id = Page.creatorId)
 				INNER JOIN PageVersion ON (PageVersion.pageId = Page.id)
-				INNER JOIN User modifier ON (modifier.id = PageVersion.creatorId)
-			WHERE Page.id = '" . $this->_db->quote($id) . "' ";
+				INNER JOIN User modifier ON (modifier.id = PageVersion.creatorId) ";
+		if ($userId)
+			$sql .= "LEFT OUTER JOIN Subscription ON (Subscription.pageId = Page.id AND Subscription.userId = '" . $this->_db->quote($userId) . "') ";
+		$sql .= "WHERE Page.id = '" . $this->_db->quote($id) . "' ";
 		if (isset($versionId))
-			$sql .= "AND PageVersion.id = '" . $this->_db->quote($versionId) . "'";
+			$sql .= "AND PageVersion.id = '" . $this->_db->quote($versionId) . "' ";
 		else
-			$sql .= "AND PageVersion.id = Page.currentVersionId";
+			$sql .= "AND PageVersion.id = Page.currentVersionId ";
 		return ($this->_db->queryOne($sql));
 	}
 	/**
@@ -86,6 +91,24 @@ class PageDao extends \Temma\Dao {
 			$versions[$line['id']] = $line;
 		return ($versions);
 	}
+	/**
+	 * Returns the list of a page's subscribers.
+	 * @param	int		$id		Page's identifier.
+	 * @param	int|array	$exclude	(optional) Identifier (or a list of identifiers) to exclude.
+	 * @return	array	List of users.
+	 */
+	public function getSubscribers($id, $exclude=null) {
+		if (!is_array($exclude))
+			$exclude = array($exclude);
+		$sql = "SELECT User.*
+			FROM Subscription
+				INNER JOIN User ON (Subscription.userId = User.id)
+			WHERE Subscription.pageId = '" . $this->_db->quote($id) . "' ";
+		if ($exclude)
+			$sql .= "AND Subscription.userId NOT IN ('" . implode(', ', $exclude) . "')";
+		$result = $this->_db->queryAll($sql);
+		return ($result);
+	}
 
 	/* ***************** WRITE ************** */
 	/**
@@ -98,6 +121,7 @@ class PageDao extends \Temma\Dao {
 	 * @return	int	Page's identifier.
 	 */
 	public function add($parentId, $creatorId, $title, $skriv, $html) {
+		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
 			SET title = '" . $this->_db->quote($title) . "',
 			    skriv = '" . $this->_db->quote($skriv) . "',
@@ -105,6 +129,7 @@ class PageDao extends \Temma\Dao {
 			    creatorId = '" . $this->_db->quote($creatorId) . "'";
 		$this->_db->exec($sql);
 		$versionId = $this->_db->lastInsertId();
+		// add entry in Page
 		$id = $this->create(array(
 			'title'			=> $title,
 			'html'			=> $html,
@@ -113,10 +138,13 @@ class PageDao extends \Temma\Dao {
 			'parentPageId'		=> $parentId,
 			'currentVersionId'	=> $versionId
 		));
+		// update PageVersion
 		$sql = "UPDATE PageVersion
 			SET pageId = '$id'
 			WHERE id = '$versionId'";
 		$this->_db->exec($sql);
+		// add a subscription
+		$this->subscription($creatorId, $id, true);
 		return ($id);
 	}
 	/**
@@ -193,6 +221,25 @@ class PageDao extends \Temma\Dao {
 			SET parentPageId = '$destinationId',
 			    priority = $prio
 			WHERE id = '" . $this->_db->quote($pageId) . "'";
+		$this->_db->exec($sql);
+	}
+	/**
+	 * Manage page subscription.
+	 * @param	int	$userId		User's identifier.
+	 * @param	int	$pageId		Page's identifier.
+	 * @param	bool	$subscribed	Page subscription.
+	 */
+	public function subscription($userId, $pageId, $subscribed) {
+		if (!$subscribed)
+			$sql = "DELETE FROM Subscription
+				WHERE userId = '" . $this->_db->quote($userId) . "'
+				  AND pageId = '" . $this->_db->quote($pageId) . "'";
+		else
+			$sql = "INSERT INTO Subscription
+				SET userId = '" . $this->_db->quote($userId) . "',
+				    pageId = '" . $this->_db->quote($pageId) . "',
+				    createDate = NOW()
+				ON DUPLICATE KEY UPDATE id = id";
 		$this->_db->exec($sql);
 	}
 }

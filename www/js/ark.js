@@ -1,5 +1,14 @@
 var ark = new function() {
 	/**
+	 * Manage page subscription.
+	 * @param	int	pageId		Current page identifier.
+	 * @param	bool	subscribed	Subscription state.
+	 */
+	this.pageSubscription = function(pageId, subscribed) {
+		var url = "/page/subscription/" + pageId + "/" + (subscribed ? "1" : "0");
+		$.getJSON(url);
+	};
+	/**
 	 * Handles page moving.
 	 * @param	int	pageId	Current page identifier.
 	 * @param	int	id	Parent identifier.

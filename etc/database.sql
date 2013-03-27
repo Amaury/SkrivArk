@@ -41,3 +41,15 @@ CREATE TABLE PageVersion (
 	INDEX pageId (pageId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+DROP TABLE IF EXISTS Subscription;
+CREATE TABLE Subscription (
+	id		INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	userId		INT UNSIGNED NOT NULL DEFAULT '0',
+	pageId		INT UNSIGNED NOT NULL DEFAULT '0',
+	createDate	DATETIME NOT NULL,
+	PRIMARY KEY (id),
+	INDEX userId (userId),
+	INDEX pageId (pageId),
+	UNIQUE INDEX userId_pageId (userId, pageId)
+) ENGINE=INNODB DEFAULT CHARSET=utf8;
+
