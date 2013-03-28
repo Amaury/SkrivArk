@@ -35,7 +35,8 @@ class AdminController extends \Temma\Controller {
 		$generate = ($_POST['generate'] == '1') ? true : false;
 		$this->redirect('/admin');
 		// data verification
-		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || (!$generate && empty($password)))
+		$conf = $this->get('conf');
+		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || (!$generate && empty($password)) || (isset($conf['demoMode']) && $conf['demoMode']))
 			return (self::EXEC_HALT);
 		// creation
 		if ($generate)
@@ -83,7 +84,8 @@ class AdminController extends \Temma\Controller {
 	public function execSetAdmin($userId, $admin) {
 		$this->view('\Temma\Views\JsonView');
 		$user = $this->get('user');
-		if ($user['id'] == $userId) {
+		$conf = $this->get('conf');
+		if ($user['id'] == $userId || (isset($conf['demoMode']) && $conf['demoMode'])) {
 			$this->set('json', 0);
 			return (self::EXEC_HALT);
 		}
@@ -98,7 +100,8 @@ class AdminController extends \Temma\Controller {
 	public function execRemoveUser($userId) {
 		$this->view('\Temma\Views\JsonView');
 		$user = $this->get('user');
-		if ($user['id'] == $userId) {
+		$conf = $this->get('conf');
+		if ($user['id'] == $userId || (isset($conf['demoMode']) && $conf['demoMode'])) {
 			$this->set('json', 0);
 			return (self::EXEC_HALT);
 		}
@@ -159,7 +162,7 @@ class AdminController extends \Temma\Controller {
 			}
 			print(";\n");
 			// pages
-			print("\n--Page\n");
+			print("\n-- Page\n");
 			for ($i = 0; ; $i += 50) {
 				$sql = "SELECT * FROM Page ORDER BY id LIMIT $i, 50";
 				$pages = $this->_db->queryAll($sql);
@@ -184,7 +187,7 @@ class AdminController extends \Temma\Controller {
 				print(";\n");
 			}
 			// versions
-			print("\n--PageVersion\n");
+			print("\n-- PageVersion\n");
 			for ($i = 0; ; $i += 50) {
 				$sql = "SELECT * FROM PageVersion ORDER BY id LIMIT $i, 50";
 				$versions = $this->_db->queryAll($sql);
@@ -201,6 +204,26 @@ class AdminController extends \Temma\Controller {
 					      "'" . $this->_db->quote($version['creatorId']) . "', " .
 					      "'" . $this->_db->quote($version['pageId']) . "')");
 					if ($j < ($nbrVersions - 1))
+						print(",\n");
+				}
+				print(";\n");
+			}
+			// subscriptions
+			print("\n-- Subscription\n");
+			for ($i = 0; ; $i += 50) {
+				$sql = "SELECT * FROM Subscription ORDER BY id LIMIT $i, 50";
+				$subscriptions = $this->_db->queryAll($sql);
+				$nbrSubscriptions = count($subscriptions);
+				if (!$nbrSubscriptions)
+					break;
+				print("INSERT INTO Subscription (id, userId, pageId, createDate) VALUES\n");
+				for ($j = 0; $j < $nbrSubscriptions; $j++) {
+					$subscription = $subscriptions[$j];
+					print("('" . $this->_db->quote($subscription['id']) . "', " .
+					      "'" . $this->_db->quote($subscription['userId']) . "', " .
+					      "'" . $this->_db->quote($subscription['pageId']) . "', " .
+					      "'" . $this->_db->quote($subscription['createDate']) . "')");
+					if ($j < ($nbrSubscriptions - 1))
 						print(",\n");
 				}
 				print(";\n");

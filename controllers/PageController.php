@@ -258,6 +258,9 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$subscribed	1 if the user subscribed to the page.
 	 */
 	public function execSubscription($pageId, $subscribed) {
+		$conf = $this->get('conf');
+		if (isset($conf['demoMode']) && $conf['demoMode'])
+			return (self::EXEC_QUIT);
 		$user = $this->get('user');
 		$this->_pageDao->subscription($user['id'], $pageId, ($subscribed ? true : false));
 		$this->view('\Temma\View\JsonView');

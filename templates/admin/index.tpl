@@ -55,12 +55,23 @@ var adm = new function() {
 					<td>{$listUser.name|escape}</td>
 					<td>{$listUser.email|escape}</td>
 					<td>
-						<input type="checkbox" value="1" id="check-admin-{$listUser.id}" {if $listUser.admin}checked="checked"{/if} {if $listUser.id == $user.id}disabled="disabled"{/if} onchange="adm.toggleAdmin({$listUser.id})" />
+						<input type="checkbox" value="1" id="check-admin-{$listUser.id}" {if $listUser.admin}checked="checked"{/if}
+						 {if $listUser.id == $user.id}disabled="disabled"{/if}
+						 {if $conf.demoMode}
+							onchange="alert('[demo mode] This functionality is disabled')"
+						 {else}
+							onchange="adm.toggleAdmin({$listUser.id})"
+						 {/if} />
 						<img id="loading-{$listUser.id}" src="/img/loading.gif" class="hide" />
 					</td>
 					<td>
 						{if $listUser.id != $user.id}
-							<button class="btn btn-danger btn-mini" onclick="adm.removeUser({$listUser.id})"><i class="icon-trash"></i></button>
+							<button class="btn btn-danger btn-mini"
+							 {if $conf.demoMode}
+								onclick="alert('[demo mode] This functionality is disabled')"
+							 {else}
+								onclick="adm.removeUser({$listUser.id})"
+							 {/if}><i class="icon-trash"></i></button>
 						{/if}
 					</td>
 				</tr>
@@ -68,7 +79,7 @@ var adm = new function() {
 		</tbody>
 	</table>
 	<div class="well">
-		<form method="post" action="/admin/addUser" class="form-inline">
+		<form method="post" action="/admin/addUser" class="form-inline" {if $conf.demoMode}onsubmit="alert('[demo mode] This functionality is disabled'); return false"{/if}>
 			<h4>Add user</h4>
 			<div>
 				<input type="text" name="name" placeholder="Name" autocomplete="off" />

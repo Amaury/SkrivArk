@@ -50,19 +50,22 @@ var adm = new function() {
 		<div class="control-group">
 			<label class="control-label" for="edit-email">Email</label>
 			<div class="controls">
-				<input type="text" id="edit-email" name="email" placeholder="email" value="{$user.email|escape}" />
+				<input type="text" id="edit-email" name="email" placeholder="email" value="{$user.email|escape}"
+				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the email address"{/if} />
 			</div>
 		</div>
 		<div class="control-group">
 			<label class="control-label" for="edit-pwd">Password</label>
 			<div class="controls">
-				<input type="password" id="edit-pwd" name="password" placeholder="password" />
+				<input type="password" id="edit-pwd" name="password" placeholder="password"
+				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
 		</div>
 		<div class="control-group">
 			<label class="control-label" for="edit-pwd2">Password (again)</label>
 			<div class="controls">
-				<input type="password" id="edit-pwd2" name="password2" placeholder="password" />
+				<input type="password" id="edit-pwd2" name="password2" placeholder="password"
+				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
 		</div>
 		<div class="control-group">

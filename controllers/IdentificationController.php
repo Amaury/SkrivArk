@@ -71,12 +71,13 @@ class IdentificationController extends \Temma\Controller {
 		    (!empty($password) && !empty($password2) && $password !== $password2))
 			return (self::EXEC_HALT);
 		// update
-		$data = array(
-			'name'	=> $name,
-			'email'	=> $email
-		);
-		if (!empty($password) && $password === $password2)
-			$data['password'] = md5($password);
+		$conf = $this->get('conf');
+		$data = array('name' => $name);
+		if (!isset($conf['demoMode']) || !$conf['demoMode']) {
+			$data['email'] = $email;
+			if (!empty($password) && $password === $password2)
+				$data['password'] = md5($password);
+		}
 		$currentUser = $this->get('user');
 		try {
 			$userDao = $this->loadDao('UserDao');

@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
 	<title>{if $conf.title}{$conf.title|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 	{* bootstrap *}
 	<link href="/css/bootstrap-2.2.2.min.css" rel="stylesheet" media="screen" />
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+	<script src="/js/bootstrap.min.js" type="text/javascript"></script>
 	{if $prettyprint}
 		{* Google prettyprint *}
 		<link href="/css/prettify.css" type="text/css" rel="stylesheet" />
@@ -92,6 +93,16 @@
 </head>
 <body {if $prettyprint}onload="prettyPrint()"{/if}>
 
+{* modal dialog window for SkrivML syntax cheat sheet *}
+<div id="popup-syntax" class="modal hide fade" role="dialog" style="width: 750px;">
+	<div class="modal-header">
+		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+		<h3>SkrivML syntax cheat sheet</h3>
+	</div>
+	<div class="modal-body"></div>
+</div>
+
+{* header *}
 <div class="navbar navbar-fixed-top">
 	<div class="navbar-inner">
 		<div class="container-fluid">
@@ -109,6 +120,7 @@
 	</div>
 </div>
 
+{* breadcrumbs *}
 <div id="breadcrumb" class="container-fluid">
 	<ul class="breadcrumb">
 		<li><a href="/" title="Back to home page"><i class="icon-home"></i></a>{if $breadcrumb || $page} <span class="divider">/</span>{/if}</li>
@@ -124,6 +136,7 @@
 	</ul>
 </div>
 
+{* main body *}
 <form id="form" method="post"
  {if $page}
 	action="/page/storeEdit/{$page.id}"
@@ -135,6 +148,7 @@
 			<input id="edit-title" type="text" name="title" value="{$page.title|escape}" placeholder="Title" autocomplete="off" style="width: 48%;" />
 			<input type="submit" class="btn btn-primary" value="{if $ACTION == "create"}Create the page{else}Save modifications{/if}" style="margin: -10px 0 0 10px;" />
 			<a href="/page/show/{if $page}{$page.id}{else}{$parentId}{/if}" class="btn" style="margin: -10px 0 0 5px;">Cancel</a>
+			<a href="http://markup.skriv.org/language/cheatSheet?blank=1" data-toggle="modal" data-target="#popup-syntax"class="pull-right">SkrivML syntax cheat sheet</a>
 		</div>
 	</div>
 
