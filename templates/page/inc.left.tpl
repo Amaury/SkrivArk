@@ -17,6 +17,7 @@
 	<a href="/page/create/{if $page}{$page.id}{else}0{/if}" class="btn btn-primary pull-right" title="Add a sub-page"><i class="icon-plus-sign"></i></a>
 </div>
 {if $ACTION == "versions" && $versions}
+	{* ****************** VERSIONS OF A PAGE ********************** *}
 	<script type="text/javascript"><!--{literal}
 		function loadPage(versionId, url) {
 			$("#link-version-" + versionId).attr("href", url);
@@ -66,9 +67,10 @@
 		<i class="icon-pencil"></i> Edit the page from this version
 	</div>
 {elseif $subPages}
+	{* ****************** SUBPAGES OF A PAGE ********************** *}
 	<ul class="_pages-sortable nav nav-tabs nav-stacked" style="background-color: #f8f8f8;">
 		{foreach name=subPages from=$subPages item=subPage}
-			<li id="subpage-{$subPage.id}">
+			<li id="subpage-{$subPage.id}" title="{$subPage.intro|escape}">
 				<a href="/page/show/{$subPage.id}">
 					<i class="icon-chevron-right pull-right" style="opacity: 0.5;"></i>
 					{$subPage.title|escape}

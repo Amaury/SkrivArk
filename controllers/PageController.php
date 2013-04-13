@@ -45,6 +45,11 @@ class PageController extends \Temma\Controller {
 		$this->set('breadcrumb', $breadcrumb);
 		// get subpages
 		$subPages = $this->_pageDao->getSubPages($id);
+		foreach ($subPages as &$subPage) {
+			$intro = substr(strip_tags($subPage['html']), 0, 120);
+			$intro .= (strlen($intro) >= 120) ? ' (...)' : '';
+			$subPage['intro'] = $intro;
+		}
 		$this->set('page', $page);
 		$this->set('subPages', $subPages);
 		// get level 0 subpages (for page move)
@@ -348,7 +353,8 @@ class PageController extends \Temma\Controller {
 	 */
 	private function _render($text) {
 		$params = array(
-			'firstTitleLevel'	=> 2
+			'firstTitleLevel'	=> 2,
+			'addFootnotes'		=> true,
 		);
 		$skrivRenderer = \Skriv\Markup\Renderer::factory('html', $params);
 		$html = $skrivRenderer->render($text);
