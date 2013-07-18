@@ -79,6 +79,10 @@
 			border: 1px solid #888;
 			padding: 3px;
 		}
+		div.bordered {
+			border: 1px solid #888;
+			display: inline-block;
+		}
 		/* footnotes */
 		div#skrivhtml div.footnotes {
 			margin-top: 2em;

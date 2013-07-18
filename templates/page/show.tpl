@@ -1,4 +1,23 @@
 {include file="inc.header.tpl"}
+<style type="text/css">{literal}
+	table.bordered {
+		border: 1px solid #888;
+	}
+	table.bordered th {
+		border: 1px solid #888;
+		padding: 3px;
+		background-color: #ddd;
+	}
+	table.bordered td {
+		border: 1px solid #888;
+		padding: 3px;
+		background-color: #fff;
+	}
+	div.bordered {
+		border: 1px solid #888;
+		display: inline-block;
+	}
+{/literal}</style>
 
 {include file="page/inc.modal-move.tpl"}
 
