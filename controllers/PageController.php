@@ -40,7 +40,8 @@ class PageController extends \Temma\Controller {
 		}
 		// get page's data
 		$user = $this->get('user');
-		$page = $this->_pageDao->get($id, null, $user['id']);
+		$userId = isset($user) ? $user['id'] : 0;
+		$page = $this->_pageDao->get($id, null, $userId);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
 		$this->set('breadcrumb', $breadcrumb);
 		// get subpages
@@ -74,7 +75,9 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$destinationId	Destination page identifier.
 	 */
 	public function execMove($id, $destinationId) {
-		$this->_pageDao->move($id, $destinationId);
+		$user = $this->get('user');
+		if (isset($user))
+			$this->_pageDao->move($id, $destinationId);
 		$this->redirect("/page/show/$id");
 	}
 	/**
@@ -84,6 +87,12 @@ class PageController extends \Temma\Controller {
 	 */
 	public function execEdit($id, $versionId=null) {
 		FineLog::log('skriv', 'DEBUG', "Edit action ($id).");
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->redirect("/page/show/$id");
+			return (self::EXEC_FORWARD);
+		}
 		// get page's data
 		$page = $this->_pageDao->get($id, $versionId);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
@@ -98,6 +107,13 @@ class PageController extends \Temma\Controller {
 	 */
 	public function execStoreEdit($id) {
 		FineLog::log('skriv', 'DEBUG', "StoreEdit($id) action.");
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->redirect("/page/show/$id");
+			return (self::EXEC_FORWARD);
+		}
+		// get data
 		$title = trim($_POST['title']);
 		if (empty($title)) {
 			$this->_session->set('editContent', $_POST['content']);
@@ -141,6 +157,13 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$parentId	Identifier of the parent page.
 	 */
 	public function execCreate($parentId) {
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->redirect("/page/show/$id");
+			return (self::EXEC_FORWARD);
+		}
+		// get data
 		$parentPage = $this->_pageDao->get($parentId);
 		$breadcrumb = $this->_pageDao->getBreadcrumb($parentPage);
 		$breadcrumb = is_array($breadcrumb) ? $breadcrumb : array();
@@ -159,7 +182,14 @@ class PageController extends \Temma\Controller {
 	 */
 	public function execStoreCreate($parentId) {
 		FineLog::log('skriv', 'DEBUG', "StoreEdit($parentId) action.");
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->redirect("/page/show/$id");
+			return (self::EXEC_FORWARD);
+		}
 		$title = trim($_POST['title']);
+		// get data
 		if (empty($title)) {
 			$this->_session->set('editContent', $_POST['content']);
 			$this->redirect("/page/create/$id");
@@ -211,6 +241,13 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$id	Page's identifier.
 	 */
 	public function execRemove($id) {
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->redirect("/page/show/$id");
+			return (self::EXEC_FORWARD);
+		}
+		// get data
 		$page = $this->_pageDao->get($id);
 		$subPages = $this->_pageDao->getSubPages($id);
 		if (isset($subPages) && !empty($subPages)) {
@@ -253,8 +290,15 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$id	Page's identifier.
 	 */
 	public function execSetPriorities($id) {
-		$this->_pageDao->setPriorities($id, $_POST['prio']);
 		$this->view('\Temma\Views\JsonView');
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			$this->set('json', 0);
+			return (self::EXEC_FORWARD);
+		}
+		// set priorities
+		$this->_pageDao->setPriorities($id, $_POST['prio']);
 		$this->set('json', 1);
 	}
 	/**
@@ -263,6 +307,12 @@ class PageController extends \Temma\Controller {
 	 * @param	int	$subscribed	1 if the user subscribed to the page.
 	 */
 	public function execSubscription($pageId, $subscribed) {
+		// check user
+		$user = $this->get('user');
+		if (!isset($user)) {
+			return (self::EXEC_QUIT);
+		}
+		// set subscription
 		$conf = $this->get('conf');
 		if (isset($conf['demoMode']) && $conf['demoMode'])
 			return (self::EXEC_QUIT);

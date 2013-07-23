@@ -61,17 +61,19 @@
 					{$page.html}
 				</div>
 				{* subscription *}
-				<form class="form-inline">
-					<label class="checkbox">
-						<input type="checkbox" {if $page.subscribed}checked="checked"{/if}
-						 {if $conf.demoMode}
-							onchange="alert('[demo mode] This functionality is disabled')"
-						 {else}
-							onchange="ark.pageSubscription({$page.id}, $(this).is(':checked'))"
-						 {/if} />
-						Warn me when this page is modified
-					</label>
-				</form>
+				{if $user}
+					<form class="form-inline">
+						<label class="checkbox">
+							<input type="checkbox" {if $page.subscribed}checked="checked"{/if}
+							 {if $conf.demoMode}
+								onchange="alert('[demo mode] This functionality is disabled')"
+							 {else}
+								onchange="ark.pageSubscription({$page.id}, $(this).is(':checked'))"
+							 {/if} />
+							Warn me when this page is modified
+						</label>
+					</form>
+				{/if}
 			{/if}
 		</div>
 	</div>

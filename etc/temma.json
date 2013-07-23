@@ -22,6 +22,7 @@
 		"sitename": "SkrivArk",
 		"baseURL": "http://arkdev.skriv.org",
 		"emailSender": "SkrivArk <no-reply@skriv.org>",
-		"demoMode": false
+		"demoMode": false,
+		"allowReadOnly": true
 	}
 }

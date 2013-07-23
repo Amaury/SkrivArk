@@ -12,13 +12,15 @@ class IdentificationController extends \Temma\Controller {
 	/** Pre-plugin. */
 	public function preplugin() {
 		FineLog::log('skriv', 'DEBUG', 'preplugin');
-		$controller = $this->get('CONTROLLER');
-		$action = $this->get('ACTION');
 		$user = $this->_session->get('user');
 		if (isset($user['id'])) {
 			$this->set('user', $user);
 			return (self::EXEC_FORWARD);
 		}
+		$conf = $this->get('conf');
+		if ($conf['allowReadOnly'] === true)
+			return (self::EXEC_FORWARD);
+		$controller = $this->get('CONTROLLER');
 		if ($controller !== 'identification') {
 			$this->redirect('/identification/login');
 			return (self::EXEC_HALT);

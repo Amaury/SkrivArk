@@ -1,21 +1,27 @@
-<div class="well well-small clearfix" style="margin-bottom: 0.5em;">
-	{if $page}
-		<a href="/page/show/{$page.parentPageId}" class="btn btn-info" title="Go to parent page"><i class="icon-arrow-up"></i></a>
-		<a href="/page/edit/{$page.id}" class="btn btn-warning pull-right" style="margin-left: 0.5em;" title="Edit this page"><i class="icon-pencil"></i></a>
-		{if $ACTION != "versions"}
-			<button class="btn btn-inverse pull-right" style="margin-left: 0.5em;" title="Move this page" onclick="$('#modal-move').modal('show')"><i class="icon-move icon-white"></i></button>
+{if $page || $user}
+	<div class="well well-small clearfix" style="margin-bottom: 0.5em;">
+		{if $page}
+			<a href="/page/show/{$page.parentPageId}" class="btn btn-info" title="Go to parent page"><i class="icon-arrow-up"></i></a>
+			{if $user}
+				<a href="/page/edit/{$page.id}" class="btn btn-warning pull-right" style="margin-left: 0.5em;" title="Edit this page"><i class="icon-pencil"></i></a>
+				{if $ACTION != "versions"}
+					<button class="btn btn-inverse pull-right" style="margin-left: 0.5em;" title="Move this page" onclick="$('#modal-move').modal('show')"><i class="icon-move icon-white"></i></button>
+				{/if}
+				{if !$subPages}
+					<a href="/page/remove/{$page.id}" onclick="return confirm('Delete this page?')" class="btn btn-danger pull-right" style="margin-left: 0.5em;" title="Delete this page"><i class="icon-trash"></i></a>
+				{/if}
+				{if $ACTION != "versions" && $page.nbrVersions > 1}
+					<a href="/page/versions/{$page.id}" class="btn btn-info pull-right" style="margin-left: 0.5em;" title="View the {$page.nbrVersions} versions of the page"><i class="icon-tasks"></i></a>
+				{elseif $ACTION == "versions"}
+					<a href="/page/show/{$page.id}" class="btn btn-info pull-right" style="margin-left: 0.5em;" title="See the last version of the page"><i class="icon-eye-open"></i></a>
+				{/if}
+			{/if}
 		{/if}
-		{if !$subPages}
-			<a href="/page/remove/{$page.id}" onclick="return confirm('Delete this page?')" class="btn btn-danger pull-right" style="margin-left: 0.5em;" title="Delete this page"><i class="icon-trash"></i></a>
+		{if $user}
+			<a href="/page/create/{if $page}{$page.id}{else}0{/if}" class="btn btn-primary pull-right" title="Add a sub-page"><i class="icon-plus-sign"></i></a>
 		{/if}
-		{if $ACTION != "versions" && $page.nbrVersions > 1}
-			<a href="/page/versions/{$page.id}" class="btn btn-info pull-right" style="margin-left: 0.5em;" title="View the {$page.nbrVersions} versions of the page"><i class="icon-tasks"></i></a>
-		{elseif $ACTION == "versions"}
-			<a href="/page/show/{$page.id}" class="btn btn-info pull-right" style="margin-left: 0.5em;" title="See the last version of the page"><i class="icon-eye-open"></i></a>
-		{/if}
-	{/if}
-	<a href="/page/create/{if $page}{$page.id}{else}0{/if}" class="btn btn-primary pull-right" title="Add a sub-page"><i class="icon-plus-sign"></i></a>
-</div>
+	</div>
+{/if}
 {if $ACTION == "versions" && $versions}
 	{* ****************** VERSIONS OF A PAGE ********************** *}
 	<script type="text/javascript"><!--{literal}
@@ -81,21 +87,24 @@
 			{/if}
 		{/foreach}
 	</ul>
-	{if $subPages|@count > 1}
+	{if $user && $subPages|@count > 1}
 		<div style="text-align: center; font-size: 0.7em; color: #888;">You can order subpages using drag n'drop.</div>
 	{/if}
 {/if}
+
 {* drag n'drop init *}
-<script type="text/javascript">{literal}<!--
-	$("._pages-sortable").sortable({
-		axis: "y",
-		cursor: "move",
-		delay: 150,
-		helper: "clone",
-		update: function() {
-			var order = $(this).sortable('toArray');
-			$.post("/page/setPriorities/" + {/literal}{if $page}{$page.id}{else}0{/if}{literal}, {prio: order});
-		}
-	});
-//-->{/literal}</script>
+{if $user}
+	<script type="text/javascript">{literal}<!--
+		$("._pages-sortable").sortable({
+			axis: "y",
+			cursor: "move",
+			delay: 150,
+			helper: "clone",
+			update: function() {
+				var order = $(this).sortable('toArray');
+				$.post("/page/setPriorities/" + {/literal}{if $page}{$page.id}{else}0{/if}{literal}, {prio: order});
+			}
+		});
+	//-->{/literal}</script>
+{/if}
 
