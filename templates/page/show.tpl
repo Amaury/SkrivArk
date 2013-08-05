@@ -74,6 +74,10 @@
 						</label>
 					</form>
 				{/if}
+				{* Disqus comments *}
+				{if $conf.disqus}
+					<div id="disqus_thread"></div>
+				{/if}
 			{/if}
 		</div>
 	</div>

@@ -14,5 +14,9 @@
 	{* main *}
 	<link href="/css/style.css" rel="stylesheet" media="screen" />
 	<script src="/js/ark.js" type="text/javascript"></script>
+	{* Disqus *}
+	{if $conf.disqus}
+		<script type="text/javascript" src="//{$conf.disqus}.disqus.com/embed.js" async></script>
+	{/if}
 </head>
 <body onload="prettyPrint()" {if $coloredBackground}class="coloredBackground"{/if}>
