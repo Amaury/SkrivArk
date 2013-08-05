@@ -23,6 +23,7 @@
 		"baseURL": "http://arkdev.skriv.org",
 		"emailSender": "SkrivArk <no-reply@skriv.org>",
 		"demoMode": false,
-		"allowReadOnly": true
+		"allowReadOnly": true,
+		"disqus": ""
 	}
 }
