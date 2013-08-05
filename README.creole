@@ -2,6 +2,7 @@
 
 SkrivArk (or simply "Ark") is a new kind of wiki software. It's a simple tool to create hierarchical pages of text.
 
+
 ==Install==
 SkrivArk is developed on top of the [[http://github.com/Amaury/Temma|Temma]] framework and the [[http://github.com/Amaury/FineBase|FineBase]] library.
 
@@ -19,17 +20,26 @@ SET admin = TRUE,
     creationDate = NOW();
 }}}
 
-Adapt the **etc/temma.json** configuration file, to define the database DSN and the cache DSN.
-
 Set full read-write access to 'log/' and 'tmp/' directories:
 {{{
 chmod 777 log tmp
 }}}
 
+
+==Configuration==
+Adapt the **etc/temma.json** configuration file:
+* Define the database DSN (MySQL server only).
+* Define the cache DSN (Memcache server only).
+
+If you want to enable comments on the pages, you need to set up an account on [[http://disqus.com/admin/signup|Disqus]].
+Copy the defined site shortname in the configuration file.
+
+
 ==Test it==
 There is a demonstration site: [[http://arkdemo.skriv.org]]
 * login: demo@demo.com
 * password: demo
+
 
 ==License==
 This project was created by Amaury Bouchard (amaury@amaury.net), based on [[http://github.com/Amaury/SkrivMarkup|SkrivMarkup]], [[http://github.com/Amaury/Temma|Temma]], [[http://github.com/Amaury/FineBase|FineBase]] and [[http://github.com/twitter/bootstrap|Bootstrap]].
