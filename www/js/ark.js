@@ -32,8 +32,7 @@ var ark = new function() {
 	 */
 	this.movePage = function(pageId, levelId) {
 		var destinationId = 0;
-		if (levelId)
-			destinationId = $("#sel-move-" + levelId).val();
+		destinationId = $("#sel-move-" + levelId).val();
 		document.location.href = "/page/move/" + pageId + "/" + destinationId;
 	};
 };
