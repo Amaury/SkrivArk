@@ -1,17 +1,19 @@
 {* tracking Google Analytics *}
-{literal}
+{if $conf.googleAnalytics}
 <script type="text/javascript"><!--
   var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-37642228-1']);
+  _gaq.push(['_setAccount', '{$conf.googleAnalytics}']);
   _gaq.push(['_trackPageview']);
 
+{literal}
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
-//--></script>
 {/literal}
+//--></script>
+{/if}
 
 </body>
 </html>

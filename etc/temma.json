@@ -24,6 +24,7 @@
 		"emailSender": "SkrivArk <no-reply@skriv.org>",
 		"demoMode": false,
 		"allowReadOnly": true,
-		"disqus": ""
+		"disqus": "",
+		"googleAnalytics": ""
 	}
 }
