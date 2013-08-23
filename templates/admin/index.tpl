@@ -97,7 +97,111 @@ var adm = new function() {
 		</form>
 	</div>
 
-	<h2>Database <small>download</small></h2>
+	<h2 style="margin-top: 40px;">Configuration</h2>
+	{if !$editableConfig}
+		<p>
+			Add writing rights to the <tt>etc/temma.json</tt> file to be able to edit it online.
+		</p>
+	{else}
+		<p id="link-config">
+			<a href="#" onclick="$('#link-config').hide(); $('#form-config').slideToggle('slow'); return false">Edit configuration parameters</a>
+		</p>
+		<form id="form-config" method="post" action="/admin/config" class="form-horizontal hide">
+			<div class="control-group">
+				<label class="control-label">Database DSN</label>
+				<div class="controls"><input type="text" value="{$dbDSN|escape}" disabled="disabled" class="uneditable-input input-xxlarge" /></div>
+			</div>
+			<div class="control-group">
+				<label class="control-label">Cache DSN</label>
+				<div class="controls"><input type="text" value="{$cacheDSN|escape}" disabled="disabled" class="uneditable-input input-xxlarge" /></div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="edit-sitename">Site name</label>
+				<div class="controls"><input type="text" id="edit-sitename" name="sitename" value="{$conf.sitename|escape}" class="input-xlarge" /></div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="edit-baseurl">Base URL</label>
+				<div class="controls">
+					<input type="text" id="edit-baseurl" name="baseurl" value="{$conf.baseURL|escape}" class="input-xxlarge" />
+					<span class="help-inline">No trailing slash</span>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="edit-emailsender">Email sender</label>
+				<div class="controls"><input type="text" id="edit-emailsender" name="emailsender" value="{$conf.emailSender|escape}" class="input-xxlarge" /></div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<label class="checkbox">
+						<input type="checkbox" name="demomode" value="1" {if $conf.demoMode}checked="checked"{/if} /> Demo mode
+					</label>
+				</div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<label class="checkbox">
+						<input type="checkbox" name="titledurl" value="1" {if $conf.titledURL}checked="checked"{/if} /> Titled URL
+					</label>
+				</div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<label class="checkbox">
+						<input type="checkbox" name="allowreadonly" value="1" {if $conf.allowReadOnly}checked="checked"{/if} /> Allow read-only
+					</label>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="edit-disqus">Disqus ID</label>
+				<div class="controls">
+					<input type="text" id="edit-disqus" name="disqus" value="{$conf.disqus|escape}" class="input-xlarge" />
+					<span class="help-inline"><a href="http://www.disqus.com/websites/" target="_blank" title="Disqus.com">Create your account</a> to add comments on your pages</span>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="edit-googleanalytics">Google Analytics ID</label>
+				<div class="controls">
+					<input type="text" id="edit-googleanalytics" name="googleanalytics" value="{$conf.googleAnalytics|escape}" class="input-xlarge" />
+					<span class="help-inline"><a href="http://www.google.com/analytics/" target="_blank" title="Google Analytics">Create your account</a> to get audience statistics</span>
+				</div>
+			</div>
+			<div class="control-group">
+				<label class="control-label" for="select-loglevel">Log level</label>
+				<div class="controls">
+					<select name="loglevel" class="input-small">
+						<option value="ERROR" {if $logLevel == 'ERROR'}selected="selected"{/if}>ERROR</option>
+						<option value="WARN" {if $logLevel == 'WARN'}selected="selected"{/if}>WARN</option>
+						<option value="INFO" {if $logLevel == 'INFO'}selected="selected"{/if}>INFO</option>
+						<option value="NOTE" {if $logLevel == 'NOTE'}selected="selected"{/if}>NOTE</option>
+						<option value="DEBUG" {if $logLevel == 'DEBUG'}selected="selected"{/if}>DEBUG</option>
+					</select>
+				</div>
+			</div>
+			<div class="control-group">
+				<div class="controls">
+					<input type="submit" class="btn btn-primary" value="Update" />
+				</div>
+			</div>
+		</form>
+	{/if}
+
+	<h2 style="margin-top: 40px;">Splashscreen</h2>
+	{if !$editableSplashscreen}
+		<p>
+			Add writing rights to the <tt>var/splashscreen.html</tt> file to be able to edit it online.
+		</p>
+	{else}
+		<p id="link-splashscreen">
+			<a href="#" onclick="$('#link-splashscreen').hide(); $('#form-splashscreen').slideToggle('slow'); return false">Edit splashscreen</a>
+		</p>
+		<form id="form-splashscreen" method="post" action="/admin/splash" class="hide" onsubmit="return checkHtmlForm()">
+			<textarea id="splashhtml" name="html" style="width: 100%; height: 10em;" onkeydown="$('#splasherror').hide()">{$splashscreen}</textarea>
+			<div id="splasherror" class="control-group error hide"><span class="help-inline">Invalid HTML Code</span></div>
+			<input type="submit" class="btn btn-primary" value="Save" />
+		</form>
+	{/if}
+
+	<h2 style="margin-top: 40px;">Database <small>download</small></h2>
 	<form method="get" action="/admin/export" class="form-inline">
 		<select name="format" onchange="if (this.value == 'html' && !$('#check-zip').is(':checked')) $('#check-zip').attr('checked', 'checked');">
 			<option value="sql">SQL - full database</option>
@@ -106,5 +210,25 @@ var adm = new function() {
 		<input type="submit" class="btn btn-primary" value="Download" />
 	</form>
 </div>
+
+<script type="text/javascript">{literal}
+	var htmlStatus = false;
+	function checkHtmlForm() {
+		if (htmlStatus)
+			return (true);
+		var data = {
+			html: $("#splashhtml").val()
+		};
+		$.post("/admin/checkHtml", data, function(result) {
+			if (!result) {
+				$("#splasherror").show();
+				return;
+			}
+			htmlStatus = true;
+			$("#form-splashscreen").submit();
+		}, "json");
+		return (false);
+	}
+{/literal}</script>
 
 {include file="inc.footer.tpl"}

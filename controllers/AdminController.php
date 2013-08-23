@@ -23,8 +23,50 @@ class AdminController extends \Temma\Controller {
 	}
 	/** Main page. */
 	public function execIndex() {
+		// get users
 		$users = $this->_userDao->search(null, 'name');
 		$this->set('users', $users);
+		// read configuration file
+		if (is_writable(__DIR__ . '/../etc/temma.json')) {
+			$this->set('editableConfig', true);
+			$json = json_decode(file_get_contents(__DIR__ . '/../etc/temma.json'), true);
+			$this->set('dbDSN', $json['application']['dataSources']['_db']);
+			$this->set('cacheDSN', $json['application']['dataSources']['_cache']);
+			$this->set('logLevel', $json['loglevels']['finebase']);
+		}
+		// read splashscreen
+		if (is_writable(__DIR__ . '/../var/splashscreen.html')) {
+			$this->set('editableSplashscreen', true);
+			$this->set('splashscreen', file_get_contents(__DIR__ . '/../var/splashscreen.html'));
+		}
+	}
+	/** Check if an HTML content is valid. */
+	public function execCheckHtml() {
+		$this->view('\Temma\Views\JsonView');
+		$this->set('json', TextUtil::isValidHtmlSyntax($_POST['html']));
+	}
+	/** Save a new splashscreen. */
+	public function execSplash() {
+		file_put_contents(__DIR__ . '/../var/splashscreen.html', $_POST['html']);
+		$this->redirect('/admin');
+	}
+	/** Store new configuration. */
+	public function execConfig() {
+		$config = json_decode(file_get_contents(__DIR__ . '/../etc/temma.json'), true);
+		$config['autoimport']['sitename'] = $_POST['sitename'];
+		$config['autoimport']['baseURL'] = $_POST['baseurl'];
+		$config['autoimport']['emailSender'] = $_POST['emailsender'];
+		$config['autoimport']['demoMode'] = (isset($_POST['demomode']) && $_POST['demomode'] === '1') ? true : false;
+		$config['autoimport']['titledURL'] = (isset($_POST['titledurl']) && $_POST['titledurl'] === '1') ? true : false;
+		$config['autoimport']['allowReadOnly'] = (isset($_POST['allowreadonly']) && $_POST['allowreadonly'] === '1') ? true : false;
+		$config['autoimport']['disqus'] = $_POST['disqus'];
+		$config['autoimport']['googleAnalytics'] = $_POST['googleanalytics'];
+		$loglevel = $_POST['loglevel'];
+		if ($loglevel == 'DEBUG' || $loglevel == 'NOTE' || $loglevel == 'INFO' || $loglevel == 'WARN' || $loglevel == 'ERROR')
+			$config['loglevels']['finebase'] = $config['loglevels']['temma'] = $config['loglevels']['skriv'] = $loglevel;
+		$json = TextUtil::JsonEncode($config);
+		file_put_contents(__DIR__ . '/../etc/temma.json', $json);
+		$this->redirect('/admin');
 	}
 	/** Ad a new user. */
 	public function execAddUser() {
