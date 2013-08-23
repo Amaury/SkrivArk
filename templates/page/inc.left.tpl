@@ -77,7 +77,7 @@
 	<ul class="_pages-sortable nav nav-tabs nav-stacked" style="background-color: #f8f8f8;">
 		{foreach name=subPages from=$subPages item=subPage}
 			<li id="subpage-{$subPage.id}" title="{$subPage.intro|escape}">
-				<a href="/page/show/{$subPage.id}">
+				<a href="/page/show/{$subPage.id}{if $conf.titledURL}/{$subPage.titledUrl}{/if}">
 					<i class="icon-chevron-right pull-right" style="opacity: 0.5;"></i>
 					{$subPage.title|escape}
 				</a>

@@ -31,17 +31,28 @@ class PageController extends \Temma\Controller {
 	/**
 	 * Displays a page.
 	 * @param	int	$id	Page's identifier.
+	 * @param	string	$title	(optional) Page's title.
 	 */
-	public function execShow($id=0) {
+	public function execShow($id=0, $title=null) {
 		FineLog::log('skriv', 'DEBUG', "Show action.");
 		if ($this->get('CONTROLLER') == 'page' && (!$id || !is_numeric($id))) {
 			$this->redirect('/');
 			return (self::EXEC_HALT);
 		}
+		$conf = $this->get('conf');
 		// get page's data
 		$user = $this->get('user');
 		$userId = isset($user) ? $user['id'] : 0;
 		$page = $this->_pageDao->get($id, null, $userId);
+		if ($id != 0 && isset($conf['titledUrl']) && $conf['titledUrl'] === true) {
+			// check page's title
+			$pageTitle = TextUtil::titleToUrl($page['title']);
+			if ($pageTitle != $title) {
+				$this->redirect("/page/show/$id/$pageTitle");
+				return;
+			}
+		}
+		// get breadcrumb
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
 		$this->set('breadcrumb', $breadcrumb);
 		// get subpages
@@ -50,6 +61,8 @@ class PageController extends \Temma\Controller {
 			$intro = substr(strip_tags($subPage['html']), 0, 120);
 			$intro .= (strlen($intro) >= 120) ? ' (...)' : '';
 			$subPage['intro'] = $intro;
+			if (isset($conf['titledURL']) && $conf['titledURL'] === true)
+				$subPage['titledUrl'] = TextUtil::titleToUrl($subPage['title']);
 		}
 		$this->set('page', $page);
 		$this->set('subPages', $subPages);
