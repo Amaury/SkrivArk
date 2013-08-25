@@ -18,7 +18,7 @@ class IdentificationController extends \Temma\Controller {
 			return (self::EXEC_FORWARD);
 		}
 		$conf = $this->get('conf');
-		if ($conf['allowReadOnly'] === true)
+		if ($conf['allowReadOnly'] === true || $this->get('URL') == '/install/done')
 			return (self::EXEC_FORWARD);
 		$controller = $this->get('CONTROLLER');
 		if ($controller !== 'identification') {

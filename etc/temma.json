@@ -1,31 +1,16 @@
 {
 	"application": {
 		"dataSources": {
-			"_db": "mysqli://arkdev:arkdev@localhost/arkdev",
-			"_cache": "memcache://localhost:11211"
+			"_db": "dummy://",
+			"_cache": "dummy://"
 		},
-		"sessionName": "ArkDevSession",
+		"sessionName": "ArkSession",
 		"sessionSource": "_cache",
-		"rootController": "PageController"
+		"rootController": "InstallController"
 	},
 	"loglevels": {
-		"finebase": "DEBUG",
-		"temma": "DEBUG",
-		"skriv": "DEBUG"
-	},
-	"plugins": {
-		"_pre": [
-			"IdentificationController"
-		]
-	},
-	"autoimport": {
-		"sitename": "SkrivArk",
-		"baseURL": "http://arkdev.skriv.org",
-		"emailSender": "SkrivArk <no-reply@skriv.org>",
-		"demoMode": false,
-		"titledURL": true,
-		"allowReadOnly": true,
-		"disqus": "",
-		"googleAnalytics": ""
+		"finebase": "WARNING",
+		"temma": "WARNING",
+		"skriv": "WARNING"
 	}
 }
