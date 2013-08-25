@@ -3,42 +3,23 @@
 SkrivArk (or simply "Ark") is a new kind of wiki software. It's a simple tool to create hierarchical pages of text.
 
 
-==Install==
-SkrivArk is developed on top of the [[http://github.com/Amaury/Temma|Temma]] framework and the [[http://github.com/Amaury/FineBase|FineBase]] library.
-
-You'll also need a MySQL database and a Memcache server.
-
-Use the **etc/database.sql** file to create the database.
-
-Then create an administrator user by running this SQL request :
-{{{
-INSERT INTO User
-SET admin = TRUE,
-    name = 'Your name',
-    email = 'your.email@domain.com',
-    password = MD5('your password'),
-    creationDate = NOW();
-}}}
-
-Set full read-write access to 'log/' and 'tmp/' directories:
-{{{
-chmod 777 log tmp
-}}}
-
-
-==Configuration==
-Adapt the **etc/temma.json** configuration file:
-* Define the database DSN (MySQL server only).
-* Define the cache DSN (Memcache server only).
-
-If you want to enable comments on the pages, you need to set up an account on [[http://disqus.com/admin/signup|Disqus]].
-Copy the defined site shortname in the configuration file.
-
-
 ==Test it==
 There is a demonstration site: [[http://arkdemo.skriv.org]]
 * login: demo@demo.com
 * password: demo
+
+
+==Install it==
+Deploy the project and configure your virtual host to point to the 'www' subdirectory.
+
+Set full read-write access to 'log/' and 'tmp/' directories, and to the configuration file:
+{{{
+chmod 777 log tmp etc/temma.json
+}}}
+
+Go the the site with your web navigator. You'll be directed through the installation process.
+
+If you want to enable comments on the pages, you need to set up an account on [[http://disqus.com/admin/signup|Disqus]].
 
 
 ==License==
