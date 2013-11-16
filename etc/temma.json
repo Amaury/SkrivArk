@@ -9,8 +9,8 @@
 		"rootController": "InstallController"
 	},
 	"loglevels": {
-		"finebase": "WARNING",
-		"temma": "WARNING",
-		"skriv": "WARNING"
+		"finebase": "WARN",
+		"temma": "WARN",
+		"skriv": "WARN"
 	}
 }

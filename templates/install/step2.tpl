@@ -13,6 +13,12 @@
 		}
 		return (ok);
 	}
+	function processCheckbox(checked) {
+		if (checked)
+			$("input[type='text']").attr("disabled", true);
+		else
+			$("input[type='text']").attr("disabled", false);
+	}
 //-->{/literal}</script>
 
 <div class="container">
@@ -23,6 +29,13 @@
 		</div>
 	{/if}
 	<form method="post" action="/install/proceedStep2" onsubmit="return checkForm()" onkeypress="$('.control-group').removeClass('error'); $('#panel-error').hide()" class="form-horizontal">
+		<div class="control-group">
+			<div class="controls">
+				<label class="checkbox">
+					<input type="checkbox" name="nocache" value="1" onchange="processCheckbox(this.checked)" /> No Memcache server
+				</label>
+			</div>
+		</div>
 		<div class="control-group">
 			<label class="control-label" for="edit-cachehost">Hostname</label>
 			<div class="controls">

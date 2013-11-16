@@ -77,6 +77,11 @@ class InstallController extends \Temma\Controller {
 	}
 	/** Store step 2 data. */
 	public function execProceedStep2() {
+		$this->redirect('/install/step3');
+		if (isset($_POST['nocache']) && $_POST['nocache'] == 1) {
+			$this->_session->set('nocache', true);
+			return;
+		}
 		$this->_session->set('cachehost', trim($_POST['cachehost']));
 		$this->_session->set('cacheport', trim($_POST['cacheport']));
 		// try to connect
@@ -91,7 +96,6 @@ class InstallController extends \Temma\Controller {
 			$cache->set($id, $val);
 			if ($cache->get($id) != $val)
 				throw new Exception();
-			$this->redirect('/install/step3');
 		} catch (Exception $e) {
 			$this->_session->set('cacheerror', true);
 			$this->redirect('/install/step2');
@@ -167,14 +171,13 @@ class InstallController extends \Temma\Controller {
 		$dbDsn = 'mysqli://' . $this->_session->get('dbuser') . ':' . $this->_session->get('dbpassword') .
 			 '@' . $this->_session->get('dbhostname') . '/' . $this->_session->get('dbname');
 		$cacheDsn = 'memcache://' . $this->_session->get('cachehost') . ':' . $this->_session->get('cacheport');
+		$nocache = $this->_session->get('nocache');
 		$config = array(
 			'application' => array(
 				'dataSources' => array(
-					'_db'	 => $dbDsn,
-					'_cache' => $cacheDsn
+					'_db'	 => $dbDsn
 				),
 				'sessionName'	 => 'ArkSession',
-				'sessionSource'	 => '_cache',
 				'rootController' => 'PageController'
 			),
 			'loglevels' => array(
@@ -198,6 +201,10 @@ class InstallController extends \Temma\Controller {
 				'googleAnalytics'	=> $this->_session->get('googleanalytics')
 			)
 		);
+		if (!$nocache) {
+			$config['application']['dataSources']['_cache'] = $cacheDsn;
+			$config['application']['sessionSource'] = '_cache';
+		}
 		$json = TextUtil::JsonEncode($config);
 		file_put_contents(__DIR__ . '/../etc/temma.json', $json);
 		// create database
@@ -222,7 +229,7 @@ class InstallController extends \Temma\Controller {
 		$sql = "INSERT INTO User
 			SET admin = TRUE,
 			    name = '" . $db->quote($_POST['adminname']) . "',
-			    email = '" . $db->quote($_POST['$adminemail']) . "',
+			    email = '" . $db->quote($_POST['adminemail']) . "',
 			    password = '" . $db->quote(md5($_POST['adminpassword'])) . "',
 			    creationDate = NOW(),
 			    modifDate = NOW()";
