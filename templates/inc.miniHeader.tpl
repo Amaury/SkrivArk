@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 	<title>{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}</title>
+	<link rel="icon" type="image/png" href="/favicon.png" />
 	{* jQuery *}
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
 	<script src="/js/jquery-ui-1.9.2.custom.min.js"></script>

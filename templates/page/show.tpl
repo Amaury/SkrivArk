@@ -43,21 +43,23 @@
 				</div>
 			{else}
 				{* breadcrumb *}
-				<ul class="breadcrumb">
-					<li><a href="/" title="Home"><i class="icon-home"></i></a>{if $page.parentPageId} <span class="divider">/</span>{/if}</li>
-					{foreach name=breadcrumb from=$breadcrumb item=crumb}
-						<li>
-							<a href="/page/show/{$crumb.id}">{$crumb.title|escape}</a>
-							{if !$smarty.foreach.breadcrumb.last}
-								<span class="divider">/</span>
-							{/if}
-						</li>
-					{/foreach}
-				</ul>
-				{* title *}
-				<h1>{$page.title|escape}</h1>
+				{if ($page && !$subPages) || $user}
+					<ul class="breadcrumb">
+						<li><a href="/" title="Home"><i class="icon-home"></i></a>{if $page.parentPageId} <span class="divider">/</span>{/if}</li>
+						{foreach name=breadcrumb from=$breadcrumb item=crumb}
+							<li>
+								<a href="/page/show/{$crumb.id}">{$crumb.title|escape}</a>
+								{if !$smarty.foreach.breadcrumb.last}
+									<span class="divider">/</span>
+								{/if}
+							</li>
+						{/foreach}
+					</ul>
+				{/if}
 				{* content *}
-				<div id="content" class="well">
+				<div id="content" xclass="well">
+					{* title *}
+					<h1>{$page.title|escape}</h1>
 					{$page.html}
 				</div>
 				{* subscription *}

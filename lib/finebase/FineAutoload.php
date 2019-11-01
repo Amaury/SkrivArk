@@ -12,8 +12,11 @@ require_once('finebase/FineLog.php');
  * @version	$Id$
  */
 class FineAutoload {
-	/** Lancement de l'autoloader. */
-	static public function autoload() {
+	/**
+	 * Lancement de l'autoloader.
+	 * @param	string|array	$path	(optionnel) Chemin ou liste de chemins d'inclusion.
+	 */
+	static public function autoload($path=null) {
 		FineLog::log('finebase', FineLog::DEBUG, "FineAutoload started.");
 		// configuration de l'autoloader
 		spl_autoload_register(function($name) {
@@ -21,22 +24,24 @@ class FineAutoload {
 			// transformation du namespace en chemin
 			$name = trim($name, '\\');
 			$name = str_replace('\\', DIRECTORY_SEPARATOR, $name);
-			$name = str_replace('_', DIRECTORY_SEPARATOR, $name);
+			//$name = str_replace('_', DIRECTORY_SEPARATOR, $name);
 			// désactivation des logs de warning, pour gérer les objets introuvables
 			$errorReporting = error_reporting();
 			error_reporting($errorReporting & ~E_WARNING);
-			if (!include("$name.php"))
-				\FineLog::log('finebase', \FineLog::DEBUG, "Unable to load object '$name'.");
+			$included = include("$name.php");
+			if ($included === false)
+				\FineLog::log('finebase', \FineLog::DEBUG, "Unable to load file '$name.php'.");
 			// remise en place de l'ancien niveau de rapport d'erreurs
 			error_reporting($errorReporting);
 		}, true, true);
+		if ($path)
+			self::addIncludePath($path);
 	}
 	/**
 	 * Ajout d'un ou plusieurs chemins d'inclusion.
 	 * @param	string|array	$path	Chemin ou liste de chemins à ajouter.
 	 */
 	static public function addIncludePath($path) {
-		FineLog::log('finebase', FineLog::DEBUG, "Add include path : " . print_r($path, true));
 		$path = is_array($path) ? $path : array($path);
 		$libPath = implode(PATH_SEPARATOR, $path);
 		if (!empty($libPath))

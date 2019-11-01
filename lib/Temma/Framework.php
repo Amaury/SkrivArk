@@ -221,10 +221,8 @@ require_once('Temma/Response.php');
  * l'action (avec l'extension ".tpl"), dans un répertoire portant le nom du contrôleur,
  * lui-même présent dans templatesPath.
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2007-2010, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
- * @version	$Id: Framework.php 278 2012-07-04 12:21:30Z abouchard $
  * @see		\Temma\Controller
  * @see		\Temma\View
  */
@@ -362,30 +360,58 @@ class Framework {
 			next($prePlugins);
 			if (empty($pluginName))
 				continue;
-			if (($execStatus = $this->_execPlugin($pluginName, 'preplugin')) !== \Temma\Controller::EXEC_FORWARD)
+			// exécution du pré-plugin
+			$execStatus = $this->_execPlugin($pluginName, 'preplugin');
+			// si demandé, arrêt total des traitement
+			if ($execStatus === \Temma\Controller::EXEC_QUIT) {
+				\FineLog::log('temma', \FineLog::DEBUG, "Premature but wanted end of processing.");
+				return;
+			}
+			// on recalcule le contrôleur et l'action (au cas où le plugin ait modifié
+			// le contrôleur, l'action, le namespace par défaut, ou encore les chemins d'inclusion)
+			$this->_setControllerName();
+			$this->_setActionName();
+			// vérification du statut retourné par le plugin
+			if ($execStatus === \Temma\Controller::EXEC_STOP ||
+			    $execStatus === \Temma\Controller::EXEC_HALT) {
+				// arrêt des traitements (des pré-plugins)
 				break;
-			// on regénère la liste des plugins si le contrôleur déclaré a été modifié par le plugin
-			if ($this->_request->getController() != $this->_initControllerName) {
-				$this->_setControllerName();
-				$this->_setActionName();
+			} else if ($execStatus === \Temma\Controller::EXEC_RESTART) {
+				// reprise des traitements de tous les pré-plugins
 				$prePlugins = $this->_generatePrePluginsList();
 				reset($prePlugins);
+			} else if ($execStatus === \Temma\Controller::EXEC_REBOOT) {
+				// on recommence tous les traitements à zéro
+				$this->process();
+				return;
 			}
 		}
 
 		/* ************** CONTROLEUR ************* */
 		if ($this->_controllerReflection->getName() == 'Temma\Controller')
 			throw new \Temma\Exceptions\HttpException("The requested page doesn't exists.", 404);
-		if ($execStatus != \Temma\Controller::EXEC_HALT && $execStatus != \Temma\Controller::EXEC_QUIT) {
-			// on vérifie la méthode qui va être exécutée
-			$this->_checkActionMethod();
-			// on exécute le contrôleur
-			\FineLog::log('temma', \FineLog::DEBUG, "Controller processing.");
-			$execStatus = $this->_executorController->subProcess($this->_objectControllerName, $this->_actionName);
+		if ($execStatus === \Temma\Controller::EXEC_FORWARD) {
+			do {
+				// on vérifie la méthode qui va être exécutée
+				$this->_checkActionMethod();
+				// on exécute le contrôleur
+				\FineLog::log('temma', \FineLog::DEBUG, "Controller processing.");
+				$execStatus = $this->_executorController->subProcess($this->_objectControllerName, $this->_actionName);
+			} while ($execStatus === \Temma\Controller::EXEC_RESTART);
+			// si demandé, on recommence tous les traitements à zéro
+			if ($execStatus === \Temma\Controller::EXEC_REBOOT) {
+				$this->process();
+				return;
+			}
+			// si demandé, arrêt total des traitement
+			if ($execStatus === \Temma\Controller::EXEC_QUIT) {
+				\FineLog::log('temma', \FineLog::DEBUG, "Premature but wanted end of processing.");
+				return;
+			}
 		}
 
 		/* ************* POST-PLUGINS ************** */
-		if ($execStatus !== \Temma\Controller::EXEC_HALT && $execStatus !== \Temma\Controller::EXEC_QUIT) {
+		if ($execStatus === \Temma\Controller::EXEC_FORWARD) {
 			\FineLog::log('temma', \FineLog::DEBUG, "Processing of post-process plugins.");
 			// génération de la liste des plugins à exécuter
 			$postPlugins = $this->_generatePostPluginsList();
@@ -394,10 +420,25 @@ class Framework {
 				next($postPlugins);
 				if (empty($pluginName))
 					continue;
-				if (($execStatus = $this->_execPlugin($pluginName, 'postplugin')) !== \Temma\Controller::EXEC_FORWARD)
+				// exécution du post-plugin
+				$execStatus = $this->_execPlugin($pluginName, 'postplugin');
+				// si demandé, arrêt total des traitement
+				if ($execStatus === \Temma\Controller::EXEC_QUIT) {
+					\FineLog::log('temma', \FineLog::DEBUG, "Premature but wanted end of processing.");
+					return;
+				}
+				// si demandé, on recommence tous les traitements à zéro
+				if ($execStatus === \Temma\Controller::EXEC_REBOOT) {
+					$this->process();
+					return;
+				}
+				// si demandé, arrêt des traitements (des post-plugins)
+				if ($execStatus === \Temma\Controller::EXEC_STOP ||
+				    $execStatus === \Temma\Controller::EXEC_HALT) {
 					break;
-				// on regénère la liste des plugins si le contrôleur déclaré a été modifié par le plugin
-				if ($this->_request->getController() != $this->_initControllerName) {
+				}
+				// si demandé, reprise des traitements de tous les post-plugins
+				if ($execStatus === \Temma\Controller::EXEC_RESTART) {
 					$this->_setControllerName();
 					$this->_setActionName();
 					$prePlugins = $this->_generatePrePluginsList();
@@ -407,11 +448,6 @@ class Framework {
 		}
 
 		/* ******************* REPONSE ****************** */
-		// arrêt des traitement si demandé
-		if ($execStatus == \Temma\Controller::EXEC_QUIT) {
-			\FineLog::log('temma', \FineLog::DEBUG, "Premature but wanted end of processing.");
-			return;
-		}
 		// récupération de la réponse
 		$response = $this->_executorController->getResponse();
 		// gestion des erreurs HTTP
@@ -433,7 +469,7 @@ class Framework {
 		$this->_timer->stop();
 		$this->_executorController->set('TIMER', $this->_timer->getTime());
 		// récupération et initialisation de la vue
-		$view = $this->_loadView($response->getView());
+		$view = $this->_loadView($response);
 		$this->_initView($view, $response);
 		// envoit des headers
 		\FineLog::log('temma', \FineLog::DEBUG, "Writing of response headers.");
@@ -495,9 +531,10 @@ class Framework {
 			// un contrôleur proxy a été défini
 			$this->_objectControllerName = $proxyName;
 		} else if (($this->_controllerName = $this->_request->getController())) {
-			// vérification que la première lettre est en minuscule
-			if ($this->_controllerName != lcfirst($this->_controllerName))
-				throw new \Temma\Exceptions\HttpException("Bad name for controller '" . $this->_controllerName . "'.", 404);
+			$lastBackslashPos = strrpos($this->_controllerName, '\\');
+			// vérification que la première lettre du nom du contrôleur est en minuscule (s'il n'y a pas de namespace)
+			if ($lastBackslashPos === false && $this->_controllerName != lcfirst($this->_controllerName))
+				throw new \Temma\Exceptions\HttpException("Bad name for controller '" . $this->_controllerName . "' (must start by a lower-case character).", 404);
 			// on regarde si le contrôleur demandé est en fait un contrôleur virtuel
 			$routes = $this->_config->routes;
 			for ($nbrLoops = 0, $routeName = $this->_controllerName, $routed = false;
@@ -510,18 +547,34 @@ class Framework {
 				$routed = true;
 			}
 			// on prend le contrôleur demandé
-			if ($routed && substr($routeName, -strlen(self::CONTROLLERS_SUFFIX)) == self::CONTROLLERS_SUFFIX)
+			if ($routed && substr($routeName, -strlen(self::CONTROLLERS_SUFFIX)) == self::CONTROLLERS_SUFFIX) {
 				$this->_objectControllerName = $routeName;
-			else
+			} else if ($lastBackslashPos !== false) {
+				$this->_objectControllerName = substr($this->_controllerName, 0, $lastBackslashPos + 1) .
+				                               ucfirst(substr($this->_controllerName, $lastBackslashPos + 1)) .
+				                               self::CONTROLLERS_SUFFIX;
+			} else {
 				$this->_objectControllerName = ucfirst($this->_controllerName) . self::CONTROLLERS_SUFFIX;
+			}
 		} else {
 			// pas de contrôleur demandé, on prend le contrôleur racine
 			$this->_objectControllerName = $this->_config->rootController;
 		}
-		if (empty($this->_objectControllerName) || !class_exists($this->_objectControllerName)) {
-			\FineLog::log('temma', \FineLog::INFO, "Controller '" . $this->_objectControllerName . "' doesn't exists.");
+		if (empty($this->_objectControllerName)) {
+			\FineLog::log('temma', \FineLog::INFO, "No controller found, use the default controller.");
 			// pas de contrôleur demandé, on prend le contrôleur par défaut
 			$this->_objectControllerName = $this->_config->defaultController;
+		} else if (!class_exists($this->_objectControllerName)) {
+			$defaultNamespace = $this->_config->defaultNamespace;
+			$fullControllerName = (!empty($defaultNamespace) ? "$defaultNamespace\\" : '') . $this->_objectControllerName;
+			if (empty($defaultNamespace) || !class_exists($fullControllerName)) {
+				\FineLog::log('temma', \FineLog::INFO, "Controller '$fullControllerName' doesn't exists.");
+				// pas de contrôleur demandé, on prend le contrôleur par défaut
+				$this->_objectControllerName = $this->_config->defaultController;
+			} else {
+				\FineLog::log('temma', \FineLog::INFO, "Controller name set to '$fullControllerName'.");
+				$this->_objectControllerName = $fullControllerName;
+			}
 		}
 		// vérification de l'orthographe du contrôleur
 		$this->_controllerReflection = new \ReflectionClass($this->_objectControllerName);
@@ -575,11 +628,22 @@ class Framework {
 		\FineLog::log('temma', \FineLog::INFO, "Executing plugin '$pluginName'.");
 		try {
 			// vérification de l'existence du plugin
-			if (class_exists($pluginName) && is_subclass_of($pluginName, '\Temma\Controller')) {
-				$plugin = new $pluginName($this->_dataSources, $this->_session, $this->_config, $this->_request, $this->_executorController);
-				$methodName = method_exists($plugin, $methodName) ? $methodName : 'plugin';
-				return ($plugin->$methodName());
+			if (!class_exists($pluginName)) {
+				$defaultNamespace = $this->_config->defaultNamespace;
+				$fullPluginName = "$defaultNamespace\\" . $pluginName;
+				if (empty($defaultNamespace) || !class_exists($fullPluginName)) {
+					\FineLog::log('temma', \FineLog::DEBUG, "Plugin '$pluginName' doesn't exist.");
+					throw new \Exception();
+				}
+				$pluginName = $fullPluginName;
 			}
+			if (!is_subclass_of($pluginName, '\Temma\Controller')) {
+				\FineLog::log('temma', \FineLog::DEBUG, "Plugin '$pluginName' is not a subclass of \\Temma\\Controller.");
+				throw new \Exception();
+			}
+			$plugin = new $pluginName($this->_dataSources, $this->_session, $this->_config, $this->_request, $this->_executorController);
+			$methodName = method_exists($plugin, $methodName) ? $methodName : 'plugin';
+			return ($plugin->$methodName());
 		} catch (Exception $e) { }
 		\FineLog::log('temma', \FineLog::DEBUG, "Unable to execute plugin '$pluginName'::'$methodName'.");
 		throw new \Temma\Exceptions\HttpException("Unable to execute plugin '$pluginName'::'$methodName'.", 500);
@@ -642,11 +706,12 @@ class Framework {
 	/* ******************************** VUE ************************************ */
 	/**
 	 * Charge une vue.
-	 * @param	string	$name	Nom de la vue à charger.
+	 * @param	\Temma\Response	$response	Paramètres de réponse retournés par le contrôleur.
 	 * @return	\Temma\View	Instance de la vue demandée.
 	 * @throws	\Temma\Exceptions\FrameworkException	Si aucune ne peut être chargée.
 	 */
-	private function _loadView($name) {
+	private function _loadView(\Temma\Response $response) {
+		$name = $response->getView();
 		\FineLog::log('temma', \FineLog::INFO, "Loading view '$name'.");
 		// si la vue n'est pas définie, on utilise la vue par défaut
 		if (empty($name)) {
@@ -655,7 +720,7 @@ class Framework {
 		}
 		// chargement de la vue
 		if (class_exists($name) && is_subclass_of($name, '\Temma\View'))
-			return (new $name($this->_dataSources, $this->_config, $this->_session));
+			return (new $name($this->_dataSources, $this->_config, $response));
 		\FineLog::log('temma', \FineLog::ERROR, "Unable to instantiate view '$name'.");
 		throw new \Temma\Exceptions\FrameworkException("Unable to load any view.", \Temma\Exceptions\FrameworkException::NO_VIEW);
 	}
@@ -682,8 +747,7 @@ class Framework {
 				throw new \Temma\Exceptions\FrameworkException("No usable template.", \Temma\Exceptions\FrameworkException::NO_TEMPLATE);
 			}
 		}
-		$view->init($response);
+		$view->init();
 	}
 }
 
-?>

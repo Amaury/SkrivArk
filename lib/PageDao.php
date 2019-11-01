@@ -26,6 +26,7 @@ class PageDao extends \Temma\Dao {
 		$sql = "SELECT	Page.*,
 				PageVersion.skriv,
 				(SELECT COUNT(*) FROM PageVersion WHERE pageId = Page.id) AS nbrVersions,
+				(SELECT COUNT(*) FROM Page sub WHERE sub.parentPageId = Page.id) AS nbrChildren,
 				creator.name AS creatorName,
 				modifier.name AS modifierName ";
 		if ($userId)
@@ -50,7 +51,26 @@ class PageDao extends \Temma\Dao {
 	 */
 	public function getSubPages($id=0) {
 		$criteria = $this->criteria()->equal('parentPageId', $id);
-		return ($this->search($criteria, 'priority', null, null));
+		$pages = $this->search($criteria, 'priority', null, null);
+		$pageIds = [];
+		$pagesList = [];
+		foreach ($pages as $page) {
+			$page['nbrChildren'] = 0;
+			$pagesList[$page['id']] = $page;
+			$pagesIds[] = $page['id'];
+		}
+		if (count($pagesIds)) {
+			$sql = "SELECT	parentPageId,
+					COUNT(*) AS n
+				FROM Page
+				WHERE parentPageId IN (" . implode(',', $pagesIds) . ")
+				GROUP BY parentPageId";
+			$result = $this->_db->queryAll($sql);
+			foreach ($result as $res) {
+				$pagesList[$res['parentPageId']]['nbrChildren'] = $res['n'];
+			}
+		}
+		return ($pagesList);
 	}
 	/**
 	 * Returns page's breadcrumb.
@@ -134,7 +154,7 @@ class PageDao extends \Temma\Dao {
 			'title'			=> $title,
 			'html'			=> $html,
 			'creatorId'		=> $creatorId,
-			'creationDate'		=> date('c'),
+			'creationDate'		=> substr(date('c'), 0, 19),
 			'parentPageId'		=> $parentId,
 			'currentVersionId'	=> $versionId
 		));
@@ -167,7 +187,7 @@ class PageDao extends \Temma\Dao {
 		$this->update($id, array(
 			'title'			=> $title,
 			'html'			=> $html,
-			'modifDate'		=> date('c'),
+			'modifDate'		=> substr(date('c'), 0, 19),
 			'currentVersionId'	=> $versionId
 		));
 	}

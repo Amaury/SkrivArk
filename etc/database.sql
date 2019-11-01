@@ -1,3 +1,5 @@
+-- User
+-- Table which contains users credentials.
 DROP TABLE IF EXISTS User;
 CREATE TABLE User (
 	id		INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -12,8 +14,10 @@ CREATE TABLE User (
 	INDEX password (password(10)),
 	INDEX creationDate (creationDate),
 	INDEX modifDate (modifDate)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
 
+-- Page
+-- Table which contains each page definition and content.
 DROP TABLE IF EXISTS Page;
 CREATE TABLE Page (
 	id			INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -27,8 +31,10 @@ CREATE TABLE Page (
 	currentVersionId	INT UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (id),
 	INDEX parentPageId (parentPageId)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
 
+-- PageVersion
+-- Contains information about each version of a page.
 DROP TABLE IF EXISTS PageVersion;
 CREATE TABLE PageVersion (
 	id		INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -39,8 +45,10 @@ CREATE TABLE PageVersion (
 	pageId		INT UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (id),
 	INDEX pageId (pageId)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
 
+-- Subscription
+-- Used when a user wants to be warn when a page is modified.
 DROP TABLE IF EXISTS Subscription;
 CREATE TABLE Subscription (
 	id		INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -51,5 +59,5 @@ CREATE TABLE Subscription (
 	INDEX userId (userId),
 	INDEX pageId (pageId),
 	UNIQUE INDEX userId_pageId (userId, pageId)
-) ENGINE=INNODB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
 

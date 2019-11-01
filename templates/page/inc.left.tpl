@@ -1,4 +1,4 @@
-{if $page || $user}
+{if ($page && !$subPages) || $user}
 	<div class="well well-small clearfix" style="margin-bottom: 0.5em;">
 		{if $page}
 			<a href="/page/show/{$page.parentPageId}" class="btn btn-info" title="Go to parent page"><i class="icon-arrow-up"></i></a>
@@ -21,6 +21,18 @@
 			<a href="/page/create/{if $page}{$page.id}{else}0{/if}" class="btn btn-primary pull-right" title="Add a sub-page"><i class="icon-plus-sign"></i></a>
 		{/if}
 	</div>
+{elseif $page && $subPages && !$user}
+	<ul class="breadcrumb" style="border: 1px solid #e3e3e3; margin-bottom: 0.5em;">
+		<li><a href="/" title="Home"><i class="icon-home"></i></a>{if $page.parentPageId} <span class="divider">/</span>{/if}</li>
+		{foreach name=breadcrumb from=$breadcrumb item=crumb}
+			<li>
+				<a href="/page/show/{$crumb.id}">{$crumb.title|escape}</a>
+				{if !$smarty.foreach.breadcrumb.last}
+					<span class="divider">/</span>
+				{/if}
+			</li>
+		{/foreach}
+	</ul>
 {/if}
 {if $ACTION == "versions" && $versions}
 	{* ****************** VERSIONS OF A PAGE ********************** *}
@@ -76,9 +88,11 @@
 	{* ****************** SUBPAGES OF A PAGE ********************** *}
 	<ul class="_pages-sortable nav nav-tabs nav-stacked" style="background-color: #f8f8f8;">
 		{foreach name=subPages from=$subPages item=subPage}
-			<li id="subpage-{$subPage.id}" title="{$subPage.intro|escape}">
-				<a href="/page/show/{$subPage.id}{if $conf.titledURL}/{$subPage.titledUrl}{/if}">
-					<i class="icon-chevron-right pull-right" style="opacity: 0.5;"></i>
+			<li id="subpage-{$subPage.id}" title="{$subPage.intro|escape}" {if $showAsSubPage && $subPage.id == $page.id}class="active bold"{/if}>
+				<a href="/page/show/{$subPage.id}/{$subPage.titledUrl}">
+					{if !$showAsSubPage || $subPage.id != $page.id}
+						<i class="icon-chevron-right pull-right" style="opacity: 0.5;"></i>
+					{/if}
 					{$subPage.title|escape}
 				</a>
 			</li>

@@ -55,8 +55,13 @@ class PageController extends \Temma\Controller {
 		// get breadcrumb
 		$breadcrumb = $this->_pageDao->getBreadcrumb($page);
 		$this->set('breadcrumb', $breadcrumb);
+		// manage sub-page
+		$showAsSubPage = (!$user && $id && !$page['nbrChildren']) ? true : false;
 		// get subpages
-		$subPages = $this->_pageDao->getSubPages($id);
+		if ($showAsSubPage)
+			$subPages = $this->_pageDao->getSubPages($page['parentPageId']);
+		else
+			$subPages = $this->_pageDao->getSubPages($id);
 		foreach ($subPages as &$subPage) {
 			$intro = substr(strip_tags($subPage['html']), 0, 120);
 			$intro .= (strlen($intro) >= 120) ? ' (...)' : '';
@@ -66,6 +71,7 @@ class PageController extends \Temma\Controller {
 		}
 		$this->set('page', $page);
 		$this->set('subPages', $subPages);
+		$this->set('showAsSubPage', $showAsSubPage);
 		// get level 0 subpages (for page move)
 		$level0 = $this->_pageDao->getSubPages(0);
 		$this->set('subLevelPages', $level0);
@@ -418,6 +424,7 @@ class PageController extends \Temma\Controller {
 		$params = array(
 			'firstTitleLevel'	=> 2,
 			'addFootnotes'		=> true,
+			'codeInlineStyles'	=> true,
 		);
 		$skrivRenderer = \Skriv\Markup\Renderer::factory('html', $params);
 		$html = $skrivRenderer->render($text);

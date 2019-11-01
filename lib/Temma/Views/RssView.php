@@ -15,19 +15,17 @@ namespace Temma\Views;
  * <li>articles : Liste de hash contenant toutes les données sur tous les articles.</li>
  * </ul>
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2007-2011, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
  * @subpackage	Views
- * @version	$Id$
  */
 class RssView extends \Temma\View {
+	/** Nom de la clé de configuration pour les headers. */
+	protected $_cacheKey = 'rss';
 	/** Titre du site. */
 	private $_title = null;
 	/** Adresse du site. */
-	private $_domain = null;
-	/** Adresse du flux RSS. */
-	private $_feedLink = null;
+	private $_link = null;
 	/** Description du site. */
 	private $_description = null;
 	/** Langue du site. */
@@ -37,34 +35,27 @@ class RssView extends \Temma\View {
 	/** Liste des articles. */
 	private $_articles = null;
 
-	/**
-	 * Fonction d'initialisation.
-	 * @param	\Temma\Response	$response	Réponse de l'exécution du contrôleur.
-	 * @param	string		$templatePath	Chemin vers le template à traiter.
-	 */
-	public function init(\Temma\Response $response) {
-		$this->_domain = $response->getData('domain');
-		$this->_feedLink = $response->getData('feedLink');
-		$this->_title = $response->getData('title');
-		$this->_description = $response->getData('description');
-		$this->_language = $response->getData('language');
-		$this->_contact = $response->getData('contact');
-		$this->_articles = $response->getData('articles');
+	/** Fonction d'initialisation. */
+	public function init() {
+		$this->_domain = $this->_response->getData('domain');
+		$this->_title = $this->_response->getData('title');
+		$this->_description = $this->_response->getData('description');
+		$this->_language = $this->_response->getData('language');
+		$this->_contact = $this->_response->getData('contact');
+		$this->_articles = $this->_response->getData('articles');
 	}
 	/** Ecrit les headers HTTP sur la sortie standard si nécessaire. */
-	public function sendHeaders() {
-		header('Content-Type: application/rss+xml; charset=UTF-8');
+	public function sendHeaders($headers=null) {
+		parent::sendHeaders(array('Content-Type' => 'application/rss+xml; charset=UTF-8'));
 	}
 	/** Ecrit le corps du document sur la sortie standard. */
 	public function sendBody() {
 		print('<' . '?xml version="1.0" encoding="UTF-8"?' . ">\n");
-		print("<rss version=\"2.0\" xmlns:atom=\"http://www.w3.org/2005/Atom\">\n");
+		print("<rss version=\"2.0\">\n");
 		print("<channel>\n");
 		print("\t<link>http://" . $this->_domain . "/</link>\n");
 		if (!empty($this->_title))
 			print("\t<title>" . $this->_title . "</title>\n");
-		if (!empty($this->_feedLink))
-			print("\t<atom:link href=\"" . $this->_feedLink . "\" rel=\"self\" type=\"application/rss+xml\" />\n");
 		if (!empty($this->_description))
 			print("\t<description>" . $this->_description . "</description>\n");
 		if (!empty($this->_language))
@@ -113,4 +104,3 @@ class RssView extends \Temma\View {
 	}
 }
 
-?>

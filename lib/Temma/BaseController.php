@@ -6,9 +6,7 @@ namespace Temma;
  * Objet basique de gestion des contrôleurs au sein d'applications MVC.
  *
  * @auhor	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2007-2012, Fine Media
  * @package	Temma
- * @version	$Id: BaseController.php 290 2012-11-13 11:33:23Z abouchard $
  */
 class BaseController {
 	/** Constante indiquant de passer au plugin suivant. */
@@ -19,6 +17,17 @@ class BaseController {
 	const EXEC_HALT = 1;
 	/** Constante indiquant d'arrêter le traitement de tous les contrôleurs, plugins compris, et de n'exécuter aucune vue. */
 	const EXEC_QUIT = 2;
+	/**
+	 * Constante indiquant de redémarrer le traitement en cours (pré-plugins, contrôleur, ou post-plugins).
+	 * Le comportement dépend de la méthode qui a retourné cette valeur :
+	 * - Si c'est un pré-plugin, c'est la chaîne de tous les pré-plugins qui est traitée de nouveau.
+	 * - Si c'est l'init du contrôleur, l'init est ré-exécutée.
+	 * - Si c'est l'action, l'init est ré-exécutée (puis le reste de la chaîne d'exécution).
+	 * - Si c'est un post-plugin, c'est la chaîne de tous les post-plugins qui est traitée de nouveau.
+	 */
+	const EXEC_RESTART = 3;
+	/** Constante indiquant de redémarrer l'ensemble des traitements (pré-plugins + contrôleur + post-plugins). */
+	const EXEC_REBOOT = 4;
 	/** Liste des sources de données. */
 	protected $_dataSources = null;
 	/** Objet de gestion de session. */
@@ -85,9 +94,16 @@ class BaseController {
 	/**
 	 * Fonction d'initialisation, appelée pour chaque contrôleur
 	 * avant que l'action demandée ne soit exécutée.
-	 * A redéfinir dans chaque contrôleur.
+	 * À redéfinir dans chaque contrôleur.
 	 */
 	public function init() {
+	}
+	/**
+	 * Fonction de finalisation, appelée pour chaque contrôleur
+	 * après que l'action demandée ne soit exécutée.
+	 * À redéfinir dans chaque contrôleur.
+	 */
+	public function finalize() {
 	}
 
 	/* ****************** GESTION DES DAO ************** */
@@ -164,6 +180,14 @@ class BaseController {
 		return (null);
 	}
 	/**
+	 * Méthode magique permettant de savoir si une connexion à une source de données existe.
+	 * @param	string	$dataSource	Nom de la source de données.
+	 * @return	bool	True si la source de données existe.
+	 */
+	final public function __isset($dataSource) {
+		return (isset($this->_dataSources[$dataSource]));
+	}
+	/**
 	 * Indique une erreur HTTP (403, 404, 500, ...).
 	 * @param	int	$code	Le code d'erreur HTTP.
 	 */
@@ -176,6 +200,18 @@ class BaseController {
 		}
 	}
 	/**
+	 * Indique un code de retour HTTP.
+	 * @param	int	$code	Le code de retour HTTP.
+	 */
+	final protected function httpCode($code) {
+		if (isset($this->_executorController))
+			$this->_executorController->httpCode($code);
+		else {
+			$this->_checkResponse();
+			$this->_response->setHttpCode($code);
+		}
+	}
+	/**
 	 * Retourne l'erreur HTTP configurée.
 	 * @return	int	Le code d'erreur configuré (403, 404, 500, ...) ou NULL si aucune erreur n'a été configurée.
 	 */
@@ -184,6 +220,16 @@ class BaseController {
 			return ($this->_executorController->getHttpError());
 		$this->_checkResponse();
 		return ($this->_response->getHttpError());
+	}
+	/**
+	 * Retourne le code de retour HTTP.
+	 * @return	int	Le code de retour HTTP.
+	 */
+	final protected function getHttpCode() {
+		if (isset($this->_executorController))
+			return ($this->_executorController->getHttpCode());
+		$this->_checkResponse();
+		return ($this->_response->getHttpCode());
 	}
 	/**
 	 * Indique une redirection HTTP (302).
@@ -247,15 +293,21 @@ class BaseController {
 	}
 	/**
 	 * Ajoute une donnée qui pourra être traitée par la vue.
-	 * @param	string	$name	Nom de la donnée.
-	 * @param	mixed	$value	Valeur de la donnée.
+	 * @param	string|array	$name	Nom de la donnée, ou tableau associatif contenant les données à charger.
+	 * @param	mixed		$value	(optionnem) Valeur de la donnée, si le premier paramètre est une chaîne.
 	 */
-	final public function set($name, $value) {
+	final public function set($name, $value=null) {
 		if (isset($this->_executorController)) {
 			$this->_executorController->set($name, $value);
 		} else {
 			$this->_checkResponse();
-			$this->_response->setData($name, $value);
+			if (is_array($name)) {
+				foreach ($name as $key => $val) {
+					$this->_response->setData($key, $val);
+				}
+			} else {
+				$this->_response->setData($name, $value);
+			}
 		}
 	}
 	/**
@@ -297,15 +349,18 @@ class BaseController {
 		if (method_exists($controller, $methodName)) {
 			\FineLog::log('temma', \FineLog::DEBUG, "Executing proxy action '" . \Temma\Framework::PROXY_ACTION . "'.");
 			$status = $obj->$methodName();
-			return ($status);
+		} else {
+			// pas d'action proxy, on regarde si l'action demandée existe, ou s'il existe une action par défaut
+			// si aucune action n'a été spécifiée, on prend celle par défaut
+			if (empty($action))
+				$action = \Temma\Framework::DEFAULT_ACTION;
+			$methodName = \Temma\Framework::ACTION_PREFIX . ucfirst($action);
+			\FineLog::log('temma', \FineLog::DEBUG, "Executing action '$action'.");
+			$status = call_user_func_array(array($obj, $methodName), (isset($parameters) ? $parameters : $this->_request->getParams()));
 		}
-		// pas d'action proxy, on regarde si l'action demandée existe, ou s'il existe une action par défaut
-		// si aucune action n'a été spécifiée, on prend celle par défaut
-		if (empty($action))
-			$action = \Temma\Framework::DEFAULT_ACTION;
-		$methodName = \Temma\Framework::ACTION_PREFIX . ucfirst($action);
-		\FineLog::log('temma', \FineLog::DEBUG, "Executing action '$action'.");
-		$status = call_user_func_array(array($obj, $methodName), (isset($parameters) ? $parameters : $this->_request->getParams()));
+		if ($status !== self::EXEC_FORWARD)
+			return ($status);
+		$status = $obj->finalize();
 		return ($status);
 	}
 
@@ -317,4 +372,3 @@ class BaseController {
 	}
 }
 
-?>

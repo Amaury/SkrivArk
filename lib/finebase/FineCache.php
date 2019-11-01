@@ -20,6 +20,9 @@ require_once('finebase/FineDatasource.php');
  * $cache->set("nom de la variable", null);
  * </code>
  *
+ * Socket Unix :
+ * <tt>memcache:///var/run/memcached.sock:0
+ *
  * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
  * @copyright	© 2009-2012, FineMedia
  * @package	FineBase
@@ -58,23 +61,30 @@ class FineCache extends FineDatasource {
 		if (substr($dsn, 0, 11) !== 'memcache://')
 			throw new Exception("Invalid cache DSN '$dsn'.");
 		$dsn = substr($dsn, 11);
-		if (extension_loaded('memcached') && !empty($dsn)) {
-			$memcache = new MemCached();
-			$memcache->setOption(Memcached::OPT_COMPRESSION, true);
-			$servers = explode(';', $dsn);
-			foreach ($servers as &$server) {
-				if (empty($server))
-					continue;
-				if (strpos($server, ':') === false)
-					$server = array($server, self::DEFAULT_MEMCACHE_PORT);
-				else {
-					list($host, $port) = explode(':', $server);
-					$server = array(
-						$host,
-						($port ? $port : self::DEFAULT_MEMCACHE_PORT)
-					);
-				}
+		if (!extension_loaded('memcached') || empty($dsn))
+			return;
+		$memcache = new MemCached();
+		$memcache->setOption(Memcached::OPT_COMPRESSION, true);
+		$servers = explode(';', $dsn);
+		foreach ($servers as &$server) {
+			if (empty($server))
+				continue;
+			if (strpos($server, ':') === false)
+				$server = array($server, self::DEFAULT_MEMCACHE_PORT);
+			else {
+				list($host, $port) = explode(':', $server);
+				$server = array(
+					$host,
+					($port ? $port : self::DEFAULT_MEMCACHE_PORT)
+				);
 			}
+		}
+		if (count($servers) == 1) {
+			if ($memcache->addServer($servers[0][0], $servers[0][1])) {
+				$this->_memcache = $memcache;
+				$this->_enabled = true;
+			}
+		} else if (count($servers) > 1) {
 			if ($memcache->addServers($servers)) {
 				$this->_memcache = $memcache;
 				$this->_enabled = true;
@@ -175,6 +185,7 @@ class FineCache extends FineDatasource {
 	 * @return	mixed	La donnée, le retour de la callback, ou NULL si la donnée n'était pas présente dans le cache.
 	 */
 	public function get($key, Closure $callback=null, $expire=0) {
+		$origPrefix = $this->_prefix;
 		$origKey = $key;
 		$key = $this->_getSaltedPrefix() . $key;
 		$data = null;
@@ -185,6 +196,7 @@ class FineCache extends FineDatasource {
 		}
 		if (is_null($data) && isset($callback)) {
 			$data = $callback();
+			$this->_prefix = $origPrefix;
 			$this->set($origKey, $data, $expire);
 		}
 		return ($data);
@@ -198,10 +210,25 @@ class FineCache extends FineDatasource {
 		if (empty($prefix))
 			return;
 		$saltKey = self::PREFIX_SALT_PREFIX . "|$prefix|";
-		$salt = substr(hash('md5', time() . mt_rand()), 0, mt_rand(4, 8));
+		$salt = substr(hash('md5', time() . mt_rand()), 0, 8);
 		if ($this->_enabled && $this->_memcache)
 			$this->_memcache->set($saltKey, $salt, 0);
 		return ($this);
+	}
+	/**
+	 * Vérifie si une variable est définie en cache.
+	 * @param	string	$key	Clé d'indexation de la donnée.
+	 * @return	bool	True si la donnée existe, false sinon.
+	 */
+	public function isSet($key) {
+		if (empty($key) || !$this->_enabled || !$this->_memcache)
+			return (false);
+		$origPrefix = $this->_prefix;
+		$origKey = $key;
+		$key = $this->_getSaltedPrevix() . $key;
+		if ($this->_memcache->get($key) === false && $this->_memcache->getResultCode() == Memcached::RES_NOTFOUND)
+			return (false);
+		return (true);
 	}
 
 	/* ************************** METHODES PRIVEES ******************** */
@@ -219,7 +246,7 @@ class FineCache extends FineDatasource {
 			$salt = $this->_memcache->get($saltKey);
 		// génération du sel si besoin
 		if (!isset($salt) || !is_string($salt)) {
-			$salt = substr(hash('md5', time() . mt_rand()), 0, mt_rand(4, 8));
+			$salt = substr(hash('md5', time() . mt_rand()), 0, 8);
 			if ($this->_enabled && $this->_memcache)
 				$this->_memcache->set($saltKey, $salt, 0);
 		}

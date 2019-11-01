@@ -13,6 +13,8 @@ require_once('finebase/FineDatasource.php');
  * exemples :
  *  redis://localhost/1
  *  redis://db.finemedia.fr:6379/2
+ *  redis-sock:///var/run/redis/redis-server.sock
+ *  redis-sock:///var/run/redis/redis-server.sock#2
  *
  * Exemple simple d'utilisation :
  * <code>
@@ -69,27 +71,31 @@ class FineNDB extends FineDatasource {
 	static public function factory($dsn) {
 		FineLog::log('finebase', FineLog::DEBUG, "FineNDB object creation with DSN: '$dsn'.");
 		// extraction des paramètres de connexion
-		if (preg_match("/^([^:]+):\/\/([^\/:]+):?(\d+)?\/?(.*)$/", $dsn, $matches)) {
+		if (preg_match("/^redis-sock:\/\/([^#]+)#?(.*)$/", $dsn, $matches)) {
+			$type = 'redis';
+			$host = $matches[1];
+			$base = $matches[2];
+			$port = null;
+		} else if (preg_match("/^([^:]+):\/\/([^\/:]+):?(\d+)?\/?(.*)$/", $dsn, $matches)) {
 			$type = $matches[1];
 			$host = $matches[2];
-			$port = $matches[3];
+			$port = (!empty($matches[3]) && ctype_digit($matches[3])) ? $matches[3] : self::DEFAULT_REDIS_PORT;
 			$base = $matches[4];
 		}
 		if ($type != 'redis')
 			throw new Exception("DSN '$dsn' is invalid.");
-		$port = isset($port) ? $port : self::DEFAULT_REDIS_PORT;
-		$base = isset($base) ? $base : self::DEFAULT_REDIS_BASE;
+		$base = !empty($base) ? $base : self::DEFAULT_REDIS_BASE;
 		// création de l'instance
-		$instance = new FineNDB($host, $base, (int)$port);
+		$instance = new FineNDB($host, $base, $port);
 		return ($instance);
 	}
 	/**
 	 * Constructeur. Ouvre une connexion à la base de données.
-	 * @param	string	$host		Nom de la machine sur laquelle se connecter.
+	 * @param	string	$host		Nom de la machine sur laquelle se connecter, ou chemin vers la socket Unix.
 	 * @param	string	$base		Nom de la base sur laquelle se connecter.
-	 * @param	int	$port		Numéro de port sur lequel se connecter.
+	 * @param	int	$port		(optionnel) Numéro de port sur lequel se connecter.
 	 */
-	private function __construct($host, $base, $port) {
+	private function __construct($host, $base, $port=null) {
 		FineLog::log('finebase', FineLog::DEBUG, "FineDB object creation.");
 		$this->_params = array(
 			'host'		=> $host,
@@ -129,18 +135,27 @@ class FineNDB extends FineDatasource {
 	 * @param	string|array	$key		Clé, ou tableau associatif de paires clé/valeur.
 	 * @param	string		$value		(optionnel) Valeur associée à la clé.
 	 * @param	bool		$createOnly	(optionnel) Indique s'il faut ajouter la paire que si elle n'existait pas. Faux par défaut.
+	 * @param	int		$timeout	(optionnel) Indique le nombre de secondes avant l'expiration de la clé. 0 par défaut, pour ne pas avoir d'expiration.
 	 * @return	FineNDB	L'objet courant.
 	 * @throws      Exception
 	 */
-	public function set($key, $value=null, $createOnly=false) {
+	public function set($key, $value=null, $createOnly=false, $timeout=0) {
 		$this->_connect();
-		if (!is_array($key))
-			$key = array($key => $value);
-		$key = array_map('json_encode', $key);
-		if ($createOnly)
-			$this->_ndb->msetnx($key);
-		else
-			$this->_ndb->mset($key);
+		if (!is_array($key)) {
+			$value = json_encode($value);
+			if ($createOnly)
+				$this->_ndb->setnx($key, $value);
+			else if (isset($timeout) && is_numeric($timeout) && $timeout > 0)
+				$this->_ndb->setex($key, $timeout, $value);
+			else
+				$this->_ndb->set($key, $value);
+		} else {
+			$key = array_map('json_encode', $key);
+			if ($createOnly)
+				$this->_ndb->msetnx($key);
+			else
+				$this->_ndb->mset($key);
+		}
 		return ($this);
 	}
 	/**

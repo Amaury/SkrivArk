@@ -5,10 +5,8 @@ namespace Temma;
 /**
  * Objet contenant la configuration d'une application Temma.
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2007-2011, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
- * @version	$Id: Config.php 285 2012-09-27 13:11:22Z abouchard $
  */
 class Config {
 	/** Niveau de log par défaut. */
@@ -77,6 +75,8 @@ class Config {
 	protected $_defaultController = null;
 	/** Nom du contrôleur proxy. */
 	protected $_proxyController = null;
+	/** Nom du namespace par défaut des contrôleurs. */
+	protected $_defaultNamespace = null;
 	/** Configuration importée automatiquement. */
 	protected $_autoimport = null;
 	/** Extra-configurations. */
@@ -186,6 +186,7 @@ class Config {
 		$this->_webPath = $this->_appPath . '/' . self::WEB_DIR;
 		$this->_rootController = isset($ini['application']['rootController']) ? $ini['application']['rootController'] : null;
 		$this->_defaultController = isset($ini['application']['defaultController']) ? $ini['application']['defaultController'] : null;
+		$this->_defaultNamespace = isset($ini['application']['defaultNamespace']) ? $ini['application']['defaultNamespace'] : null;
 		$this->_proxyController = isset($ini['application']['proxyController']) ? $ini['application']['proxyController'] : null;
 		$this->_autoimport = isset($ini['autoimport']) ? $ini['autoimport'] : null;
 	}
@@ -199,6 +200,17 @@ class Config {
 		return ($this->$name);
 	}
 	/**
+	 * Setter. Sert à définir certaines valeurs de configuration.
+	 * @param	string	$name	Nom de la propriété à modifier.
+	 * @param	mixed	$value	Nouvelle valeur pour la propriété.
+	 */
+	public function __set($name, $value) {
+		if (!in_array($name, ['defaultNamespace', 'errorPages', 'defaultController', 'rootController', 'proxyController']))
+			throw new \Exception("Bad property '$name'.");
+		$name = '_' . $name;
+		$this->$name = $value;
+	}
+	/**
 	 * Indique si la variable demandée est définie.
 	 * @param	string	$name	Nom de la propriété à vérifier.
 	 * @return	bool	Indique si la variable est définie.
@@ -206,6 +218,17 @@ class Config {
 	public function __isset($name) {
 		$name = '_' . $name;
 		return (isset($this->$name));
+	}
+	/**
+	 * Getter pour la configuration importée automatiquement.
+	 * @param	string	$key		Clé de sous-élément de configuration à retourner.
+	 * @param	mixed	$default	(optionnel) Valeur par défaut à retourner si l'élément n'existe pas.
+	 * @return	mixed	La valeur de la propriété demandée.
+	 */
+	public function autoimport($key, $default=null) {
+		if (isset($this->_autoimport[$key]))
+			return ($this->_autoimport[$key]);
+		return ($default);
 	}
 	/**
 	 * Getter pour la configuration étendue.
@@ -239,4 +262,3 @@ class Config {
 	}
 }
 
-?>

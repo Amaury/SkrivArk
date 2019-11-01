@@ -2,16 +2,14 @@
 
 namespace Temma\Views;
 
-require_once('smarty/Smarty.class.php');
+require_once('smarty3/Smarty.class.php');
 
 /**
  * Vue traitant les templates Smarty.
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2007-2012, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
  * @subpackage	Views
- * @version	$Id: SmartyView.php 277 2012-06-26 15:55:46Z abouchard $
  * @link	http://smarty.php.net/
  */
 class SmartyView extends \Temma\View {
@@ -21,6 +19,8 @@ class SmartyView extends \Temma\View {
 	const CACHE_DIR = 'templates_cache';
 	/** Chemin vers le répertoire de plugins Smarty. */
 	const PLUGINS_DIR = 'lib/smarty/plugins';
+	/** Nom de la clé de configuration pour les headers. */
+	protected $_cacheKey = 'smarty';
 	/** Indique si on peut mettre la page en cache. */
 	private $_isCacheable = false;
 	/** Objet Smarty. */
@@ -32,10 +32,12 @@ class SmartyView extends \Temma\View {
 	 * Constructeur.
 	 * @param	array		$dataSources	Liste de connexions à des sources de données.
 	 * @param	\Temma\Config	$config		Objet de configuration.
-	 * @param	\FineSession	$session	(optionnel) Objet de connexion à la session.
+	 * @param	\Temma\Response	$response	Objet de réponse.
 	 */
-	public function __construct($dataSources, \Temma\Config $config, \FineSession $session=null) {
-		parent::__construct($dataSources, $config, $session);
+	public function __construct($dataSources, \Temma\Config $config, \Temma\Response $response) {
+		global $smarty;
+
+		parent::__construct($dataSources, $config, $response);
 		// vérification de la présence des répertoires temporaires
 		$compiledDir = $config->tmpPath . '/' . self::COMPILED_DIR;
 		if (!is_dir($compiledDir) && !mkdir($compiledDir, 0755))
@@ -45,16 +47,25 @@ class SmartyView extends \Temma\View {
 			throw new \Temma\Exceptions\FrameworkException("Unable to create directory '$cacheDir'.", \Temma\Exceptions\FrameworkException::CONFIG);
 		// création de l'objet Smarty
 		$this->_smarty = new \Smarty();
+		$smarty = $this->_smarty;
 		$this->_smarty->compile_dir = $compiledDir;
 		$this->_smarty->cache_dir = $cacheDir;
+		$this->_smarty->error_reporting = E_ALL & ~E_NOTICE;
 		// ajout des répertoires d'inclusion de plugins
-		$this->_smarty->plugins_dir[] = $config->appPath . '/' . self::PLUGINS_DIR;
+		$pluginPathList = array();
+		$pluginPathList[] = $config->appPath . '/' . self::PLUGINS_DIR;
 		$pluginsDir = $config->xtra('smarty-view', 'pluginsDir');
 		if (is_string($pluginsDir))
-			$this->_smarty->plugins_dir[] = $pluginsDir;
-		else if (is_array($pluginsDir)) {
-			foreach ($pluginsDir as $dir)
-				$this->_smarty->plugins_dir[] = $dir;
+			$pluginPathList[] = $pluginsDir;
+		else if (is_array($pluginsDir))
+			$pluginPathList = array_merge($pluginsPathList, $pluginsDir);
+		if (method_exists($this->_smarty, 'setPluginsDir')) {
+			$pluginPathList = array_merge($this->_smarty->getPluginsDir(), $pluginPathList);
+			$this->_smarty->setPluginsDir($pluginPathList);
+		} else {
+			foreach ($pluginPathList as $_path) {
+				$this->_smarty->plugins_dir[] = $_path;
+			}
 		}
 	}
 	/**
@@ -74,22 +85,21 @@ class SmartyView extends \Temma\View {
 	public function setTemplate($path, $template) {
 		\FineLog::log('temma', \FineLog::DEBUG, "Searching template '$template'.");
 		$this->_smarty->template_dir = $path;
-		if ($this->_smarty->template_exists($template)) {
-			\FineLog::log('temma', \FineLog::WARN, "Template found '$template'.");
+		if (method_exists($this->_smarty, 'templateExists')) {
+			if ($this->_smarty->templateExists($template)) {
+				$this->_template = $template;
+				return (true);
+			}
+		} else if ($this->_smarty->template_exists($template)) {
 			$this->_template = $template;
 			return (true);
 		}
 		\FineLog::log('temma', \FineLog::WARN, "No one template found with name '$template'.");
 		return (false);
 	}
-	/**
-	 * Fonction d'initialisation.
-	 * @param	\Temma\Response	$response	Réponse de l'exécution du contrôleur.
-	 * @param	string		$templatePath	Chemin vers le template à traiter.
-	 */
-	public function init(\Temma\Response $response) {
-		\FineLog::log('temma', \FineLog::WARN, "Template init.");
-		foreach ($response->getData() as $key => $value) {
+	/** Fonction d'initialisation. */
+	public function init() {
+		foreach ($this->_response->getData() as $key => $value) {
 			if (isset($key[0]) && $key[0] != '_')
 				$this->_smarty->assign($key, $value);
 			else if ($key == '_temmaCacheable' && $value === true)
@@ -115,4 +125,3 @@ class SmartyView extends \Temma\View {
 	}
 }
 
-?>

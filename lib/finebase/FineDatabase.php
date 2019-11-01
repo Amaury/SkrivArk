@@ -11,6 +11,10 @@ require_once('finebase/FineDatasource.php');
  * <pre>type://login:password@host/base</pre>
  * exemple : <tt>mysqli://user:pwd@localhost/database</tt>
  *
+ * Pour une connexion MySQL via socket Unix :
+ * <pre>mysqli://login:password@localhost/database#chemin.sock</pre>
+ * exemple : <tt>mysqli://user:pwd@localhost/database#/var/run/mysqld/mysqld.sock</tt>
+ *
  * Exemple simple d'utilisation :
  * <code>
  * try {
@@ -54,7 +58,7 @@ require_once('finebase/FineDatasource.php');
  *
  * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
  * @copyright	© 2007-2012, FineMedia
- * @version	$Id: FineDatabase.php 658 2013-11-04 09:33:06Z ckhalaghi $
+ * @version	$Id: FineDatabase.php 655 2013-09-12 08:39:20Z abouchard $
  * @package	FineBase
  */
 class FineDatabase extends FineDatasource {
@@ -62,6 +66,10 @@ class FineDatabase extends FineDatasource {
 	private $_db = null;
 	/** Paramètres de connexion à la base de données. */
 	private $_params = null;
+	/** Indique qu'une requête synchrone a été exécutée. */
+	private $_sync = false;
+	/** Liste des requêtes asynchrones en attente. */
+	private $_asyncRequests = null;
 
 	/* ************************ CONSTRUCTION ********************** */
 	/**
@@ -74,18 +82,19 @@ class FineDatabase extends FineDatasource {
 	static public function factory($dsn) {
 		FineLog::log('finebase', FineLog::DEBUG, "Database object creation with DSN: '$dsn'.");
 		// extraction des paramètres de connexion
-		if (preg_match("/^([^:]+):\/\/([^:@]+):?([^@]+)?@([^\/:]+):?(\d+)?\/(.*)$/", $dsn, $matches)) {
+		if (preg_match("/^([^:]+):\/\/([^:@]+):?([^@]+)?@([^\/:]+):?(\d+)?\/([^#]*)#?(.*)$/", $dsn, $matches)) {
 			$type = $matches[1];
 			$login = $matches[2];
 			$password = $matches[3];
 			$host = $matches[4];
 			$port = $matches[5];
 			$base = $matches[6];
+			$sock = $matches[7];
 		}
-		if ($type != 'mysqli')
+		if (!isset($type) || $type != 'mysqli')
 			throw new Exception("No DSN provided.");
 		// création de l'instance
-		$instance = new FineDatabase($host, $login, $password, $base, (int)$port);
+		$instance = new FineDatabase($host, $login, $password, $base, (int)$port, $sock);
 		return ($instance);
 	}
 	/**
@@ -95,15 +104,17 @@ class FineDatabase extends FineDatasource {
 	 * @param	string	$password	Mot de passe de l'utilisateur.
 	 * @param	string	$base		Nom de la base sur laquelle se connecter.
 	 * @param	int	$port		Numéro de port sur lequel se connecter.
+	 * @param	string	$sock		(optionnel) Chemin vers la socket Unix locale (si le paramètre $host vaut 'localhost').
 	 */
-	private function __construct($host, $login, $password, $base, $port) {
+	private function __construct($host, $login, $password, $base, $port, $sock=null) {
 		FineLog::log('finebase', FineLog::DEBUG, "MySQL object creation. base: '$base'.");
 		$this->_params = array(
 			'host'		=> $host,
 			'login'		=> $login,
 			'password'	=> $password,
 			'base'		=> $base,
-			'port'		=> $port
+			'port'		=> $port,
+			'sock'		=> $sock,
 		);
 	}
 	/** Destructeur. Ferme la connexion. */
@@ -117,7 +128,9 @@ class FineDatabase extends FineDatasource {
 	private function _connect() {
 		if ($this->_db)
 			return;
-		$this->_db = new mysqli($this->_params['host'], $this->_params['login'], $this->_params['password'], $this->_params['base'], (int)$this->_params['port']);
+		$this->_db = new mysqli($this->_params['host'], $this->_params['login'], $this->_params['password'],
+		                        $this->_params['base'], (int)$this->_params['port'], $this->_params['sock']);
+		$this->charset();
 		if (mysqli_connect_errno())
 			throw new Exception("MySQLi database connexion error: " . mysqli_connect_error());
 	}
@@ -151,7 +164,7 @@ class FineDatabase extends FineDatasource {
 	 * @throws      Exception
 	 */
 	public function commit() {
-		FineLog::log('finebase', FineLog::DEBUG, "Commiting transaction.");
+		FineLog::log('finebase', FineLog::DEBUG, "Committing transaction.");
 		$this->_connect();
 		if ($this->_db->commit() === false)
 			throw new Exception("Error during transaction commit.");
@@ -186,7 +199,7 @@ class FineDatabase extends FineDatasource {
 	}
 	/**
 	 * Echappe les chaînes de caractères.
-	 * @param	string	$str	La chaîne à échapper.
+	 * @param       string  $str    La chaîne à échapper.
 	 * @return      string  La chaîne après échappement.
 	 */
 	public function quote($str) {
@@ -196,10 +209,18 @@ class FineDatabase extends FineDatasource {
 	/**
 	 * Exécute une requête SQL sans récupération des données.
 	 * @param       string  $sql    La requête à exécuter.
+	 * @param	bool	$async	(optionnel) Indique que la requête peut être mise en attente
+	 *				jusqu'à ce qu'une requête synchrone soit exécutée. Les requêtes
+	 *				asynchrones sont alors exécutées en premier, dans l'ordre de leurs
+	 *				appels. False par défaut.
+	 * @return	int	Le nombre de lignes modifiées. Dans le cas d'une requête asynchrone pour laquelle
+	 *			la connexion au serveur n'aurait pas encore été ouverte, cette méthode retourne null.
 	 * @throws      Exception
 	 */
-	public function exec($sql) {
-		$this->_query($sql);
+	public function exec($sql, $async=false) {
+		$this->_query($sql, $async);
+		if ($this->_db)
+			return ($this->_db->affected_rows);
 	}
 	/**
 	 * Exécute une requête SQL avec récupération d'une seule ligne de données.
@@ -241,12 +262,27 @@ class FineDatabase extends FineDatasource {
 	/**
 	 * Exécute une requête et retourne son résultat.
 	 * @param	string	$sql	La requête à exécuter.
+	 * @param	bool	$async	(optionnel) Indique si la requête peut être asynchrone. False par défaut.
 	 * @return	mixed	La ressource du résultat.
 	 * @throws	Exception
 	 */
-	private function _query($sql) {
+	private function _query($sql, $async=false) {
 		FineLog::log('finebase', FineLog::DEBUG, "SQL query: $sql");
+		if ($async && !$this->_sync) {
+			if (is_null($this->_asyncRequests))
+				$this->_asyncRequests = array();
+			$this->_asyncRequests[] = $sql;
+			return;
+		}
 		$this->_connect();
+		$this->_sync = true;
+		if (!empty($this->_asyncRequests)) {
+			foreach ($this->_asyncRequests as $request) {
+				if ($this->_db->query($request) === false)
+					throw new Exception("Async request failed: " . $this->_db->error);
+			}
+			$this->_asyncRequests = null;
+		}
 		if (($result = $this->_db->query($sql)) === false)
 			throw new Exception("Request failed: " . $this->_db->error);
 		return ($result);

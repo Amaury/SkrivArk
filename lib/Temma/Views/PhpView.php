@@ -5,13 +5,13 @@ namespace Temma\Views;
 /**
  * Vue traitant les templates écrits en PHP.
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2012, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
  * @subpackage	Views
- * @version	$Id: SmartyView.php -1   $
  */
 class PhpView extends \Temma\View {
+	/** Nom de la clé de configuration pour les headers. */
+	protected $_cacheKey = 'php';
 	/** Indique si on peut mettre la page en cache. */
 	private $_isCacheable = false;
 	/** Nom du template à utiliser. */
@@ -42,13 +42,9 @@ class PhpView extends \Temma\View {
 		\FineLog::log('temma', \FineLog::WARN, "No one template found with name '$template'.");
 		return (false);
 	}
-	/**
-	 * Fonction d'initialisation.
-	 * @param	\Temma\Response	$response	Réponse de l'exécution du contrôleur.
-	 * @param	string		$templatePath	Chemin vers le template à traiter.
-	 */
-	public function init(\Temma\Response $response) {
-		foreach ($response->getData() as $key => $value) {
+	/** Fonction d'initialisation. */
+	public function init() {
+		foreach ($this->_response->getData() as $key => $value) {
 			if (isset($key[0]) && $key[0] != '_')
 				$GLOBALS[$key] = $value;
 			else if ($key == '_temmaCacheable' && $value === true)
@@ -75,4 +71,3 @@ class PhpView extends \Temma\View {
 	}
 }
 
-?>

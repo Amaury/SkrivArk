@@ -89,10 +89,18 @@ class FineLog {
 	const CRIT = 'CRIT';
 	/** Nom de la classe de log par défaut. */
 	const DEFAULT_CLASS = 'default';
+	/** Identifiant de requête. */
+	static private $_requestId = null;
 	/** Chemin vers le fichier dans lequel écrire les messages de log. */
 	static private $_logPath = null;
 	/** Tableau de fonctions à exécuter pour écrire les messages de log de manière personnalisée. */
 	static private $_logCallbacks = array();
+	/** Indicateur d'écriture sur STDOUT. */
+	static private $_logToStdOut = false;
+	/** Indicateur d'écriture sur STDERR. */
+	static private $_logToStdErr = false;
+	/** Indicateur d'écriture des logs. */
+	static private $_enable = true;
 	/** Seuil actuel de criticité des messages affichés. */
 	static private $_threshold = array();
 	/** Seuil par défaut pour les messages de log dont la classe n'est pas connue. */
@@ -122,6 +130,7 @@ class FineLog {
 	 * @param	string	path	Chemin vers le fichier de log.
 	 */
 	static public function setLogFile($path) {
+		self::$_enable = true;
 		self::$_logPath = $path;
 	}
 	/**
@@ -129,7 +138,32 @@ class FineLog {
 	 * @param	Closure	$func	La fonction à exécuter.
 	 */
 	static public function addCallback(Closure $func) {
+		self::$_enable = true;
 		self::$_logCallbacks[] = $func;
+	}
+	/**
+	 * Indique qu'il faut écrire sur STDOUT.
+	 * @param	bool	$activate	(optionnel) Mettre à false pour désactiver l'écriture sur STDOUT.
+	 */
+	static public function logToStdOut($activate=true) {
+		self::$_enable = true;
+		self::$_logToStdOut = ($activate === false) ? false : true;
+	}
+	/**
+	 * Indique qu'il faut écrire sur STDERR.
+	 * @param	bool	$activate	(optionnel) Mettre à false pour désactiver l'écriture sur STDERR.
+	 */
+	static public function logToStdErr($activate=true) {
+		self::$_enable = true;
+		self::$_logToStdErr = ($activate === false) ? false : true;
+	}
+	/** Désactive l'écriture des logs. */
+	static public function disable() {
+		self::$_enable = false;
+	}
+	/** Active l'écriture des logs. */
+	static public function enable() {
+		self::$_enable = true;
 	}
 	/**
 	 * Définit le seuil de criticité minimum en-dessous duquel les messages ne sont pas écrits.
@@ -158,6 +192,9 @@ class FineLog {
 	 * @param	string	$message				(optionnel) Message de log à écrire.
 	 */
 	static public function log($classOrMessageOrPriority, $messageOrPriority=null, $message=null) {
+		if (is_null(self::$_requestId)) {
+			self::$_requestId = substr(base_convert(hash('md5', mt_rand()), 16, 36), 0, 4);
+		}
 		// traitement des paramètres
 		if (!is_null($message) && !is_null($messageOrPriority)) {
 			$class = $classOrMessageOrPriority;
@@ -202,6 +239,13 @@ class FineLog {
 			$message = $txt;
 		}
 		self::_writeLog($class, $priority, $message);
+	}
+	/**
+	 * Écrit un message de log simple.
+	 * @param	string	$message	Message de log.
+	 */
+	static public function l($message) {
+		self::_writeLog(null, null, $message);
 	}
 	/**
 	 * Ecrit un message de log détaillé.
@@ -252,18 +296,24 @@ class FineLog {
 	 * @throws	FineIOException			Problème d'écriture.
 	 */
 	static private function _writeLog($class, $priority, $message) {
+		if (!self::$_enable)
+			return;
 		// ouvre le fichier si nécessaire
 		if (isset(self::$_logPath) && !empty(self::$_logPath))
 			$path = self::$_logPath;
-		else if (empty(self::$_logCallbacks))
+		else if (!self::$_logToStdOut && !self::$_logToStdErr && empty(self::$_logCallbacks))
 			throw new FineApplicationException('No log file set.', FineApplicationException::API);
-		$text = date('c') . ' ' . (isset(self::$_labels[$priority]) ? (self::$_labels[$priority] . ' ') : '');
+		$text = date('c') . ' [' . self::$_requestId . '] ' . (isset(self::$_labels[$priority]) ? (self::$_labels[$priority] . ' ') : '');
 		if (!empty($class) && $class != self::DEFAULT_CLASS)
 			$text .= "-$class- ";
 		$text .= $message . "\n";
 		if (isset($path))
 			if (file_put_contents($path, $text, (substr($path, 0, 6) != 'php://' ? FILE_APPEND : null)) === false)
 				throw new FineIOException("Unable to write on log file '$path'.", FineIOException::UNWRITABLE);
+		if (self::$_logToStdOut)
+			print($text);
+		if (self::$_logToStdErr)
+			fwrite(STDERR, $text);
 		foreach (self::$_logCallbacks as $callback)
 			$callback($message, self::$_labels[$priority], $class);
 	}

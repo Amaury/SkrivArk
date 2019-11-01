@@ -5,10 +5,8 @@ namespace Temma;
 /**
  * Objet de gestion des requêtes HTTP dans le framework Temma.
  *
- * @author	Amaury Bouchard <amaury.bouchard@finemedia.fr>
- * @copyright	© 2007-2011, Fine Media
+ * @author	Amaury Bouchard <amaury@amaury.net>
  * @package	Temma
- * @version	$Id: Request.php 295 2013-11-15 09:37:00Z abouchard $
  */
 class Request {
 	/** Information de pathInfo. */
@@ -56,7 +54,7 @@ class Request {
 				throw new \Temma\Exceptions\FrameworkException('No PATH_INFO nor REQUEST_URI environment variable.', \Temma\Exceptions\FrameworkExceptions::CONFIG);
 			// spécial référencement : si l'URL demandée se terminait par un slash, on fait une redirection
 			// hint: PATH_INFO n'est pas rempli quand on accède à la racine du projet Temma, qu'il soit à la racine du site ou dans un sous répertoire
-			if (isset($_SERVER['PATH_INFO']) && !empty($_SERVER['PATH_INFO']) && substr($requestUri, -1) == '/') {
+			if (isset($_SERVER['PATH_INFO']) && !empty($PATH_INFO) && substr($requestUri, -1) == '/') {
 				$url = substr($requestUri, 0, -1) . ((isset($_SERVER['QUERY_STRING']) && !empty($_SERVER['QUERY_STRING'])) ? ('?' . $_SERVER['QUERY_STRING']) : '');
 				\FineLog::log('temma', \FineLog::DEBUG, "Redirecting to '$url'.");
 				header('HTTP/1.1 301 Moved Permanently');
@@ -200,4 +198,3 @@ class Request {
 	}
 }
 
-?>
