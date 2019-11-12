@@ -1,6 +1,6 @@
 {include file="inc.header.tpl"}
 
-<script type="text/javascript">{literal}<!--
+<script>{literal}
 	function checkForm() {
 		var ok = true;
 		if (!$("#edit-sitename").val().length) {
@@ -17,7 +17,7 @@
 		}
 		return (ok);
 	}
-//-->{/literal}</script>
+{/literal}</script>
 
 <div class="container">
 	<h2 style="margin-top: 40px;">Step 3 <small>Site parameters</small></h2>

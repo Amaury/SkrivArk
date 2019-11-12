@@ -139,10 +139,10 @@ class PageController extends \Temma\Controller {
 			$this->redirect("/page/edit/$id");
 			return (self::EXEC_HALT);
 		}
-		$html = $this->_render($_POST['content']);
+		list($html, $toc) = $this->_render($_POST['content']);
 		$currentUser = $this->get('user');
 		// update the page
-		$this->_pageDao->addVersion($id, $currentUser['id'], $title, $_POST['content'], $html);
+		$this->_pageDao->addVersion($id, $currentUser['id'], $title, $_POST['content'], $html, $toc);
 		// warn all subscribers
 		$subscribers = $this->_pageDao->getSubscribers($id, $currentUser['id']);
 		if (!empty($subscribers)) {
@@ -214,10 +214,10 @@ class PageController extends \Temma\Controller {
 			$this->redirect("/page/create/$id");
 			return (self::EXEC_HALT);
 		}
-		$html = $this->_render($_POST['content']);
+		list($html, $toc) = $this->_render($_POST['content']);
 		$currentUser = $this->get('user');
 		// create the new page
-		$id = $this->_pageDao->add($parentId, $currentUser['id'], $title, $_POST['content'], $html);
+		$id = $this->_pageDao->add($parentId, $currentUser['id'], $title, $_POST['content'], $html, $toc);
 		// is there subscribers to the parent page?
 		if ($parentId) {
 			$subscribers = $this->_pageDao->getSubscribers($parentId, $currentUser['id']);
@@ -251,7 +251,7 @@ class PageController extends \Temma\Controller {
 	/** Convert a SkrivML text into HTML (used in edit page). */
 	public function execConvert() {
 		FineLog::log('skriv', 'INFO', "Convert action.");
-		$html = $this->_render($_POST['text']);
+		list($html, $toc) = $this->_render($_POST['text']);
 		print($html);
 		return (self::EXEC_QUIT);
 	}
@@ -418,7 +418,7 @@ class PageController extends \Temma\Controller {
 	/**
 	 * Render a SkrivML text in HTML.
 	 * @param	string	$text	SkrivML text.
-	 * @return	string	HTML result.
+	 * @return	array	Array with the HTML result, and the raw Table Of Contents.
 	 */
 	private function _render($text) {
 		$params = array(
@@ -428,7 +428,8 @@ class PageController extends \Temma\Controller {
 		);
 		$skrivRenderer = \Skriv\Markup\Renderer::factory('html', $params);
 		$html = $skrivRenderer->render($text);
-		return ($html);
+		$toc = $skrivRenderer->getToc(true);
+		return (array($html, $toc));
 	}
 }
 

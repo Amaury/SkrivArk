@@ -1,7 +1,6 @@
 {include file="inc.header.tpl"}
 
-{literal}
-<script type="text/javascript">
+<script>{literal}
 	function checkForm() {
 		var ok = true;
 		var regex = /^[A-Za-z0-9_]+$/;
@@ -23,8 +22,7 @@
 		}
 		return (ok);
 	}
-</script>
-{/literal}
+{/literal}</script>
 
 <div class="container">
 	<h2 style="margin-top: 40px;">Step 1 <small>MySQL/MariaDB Database</small></h2>

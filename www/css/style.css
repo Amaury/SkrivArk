@@ -24,10 +24,6 @@
 	padding: 7px 9px;
 }
 
-/* BASE */
-body {
-	padding-top: 50px;
-}
 body.coloredBackground {
 	background-color: #f5f5f5;
 }
@@ -43,6 +39,11 @@ body.coloredBackground {
 /* titles */
 h2 {
 	border-bottom: 1px solid #ddd;
+}
+
+/* bold */
+.bold {
+	font-weight: bold;
 }
 
 /* grey alert box */
@@ -66,8 +67,82 @@ h2 {
 }
 
 /* ******* CONTENT ********** */
+/* titles */
+header.page-title-bar h1 {
+	margin-bottom: 1.0em;
+}
+#content {
+	counter-reset: h2counter;
+}
+#content h2 {
+	counter-reset: h3counter;
+}
+#content h2:before {
+	content: counter(h2counter) ".\0000a0";
+	counter-increment: h2counter;
+}
+#content h2:only-of-type:before {
+	content: none;
+	counter-increment: none;
+}
 #content h2:not(:first-child) {
 	margin-top: 1em;
+}
+#content h3 {
+	counter-reset: h4counter;
+}
+#content h3:before {
+	content: counter(h2counter) "." counter(h3counter) ".\0000a0";
+	counter-increment: h3counter;
+}
+#content h3:only-of-type:before {
+	content: none;
+}
+#content h4:before {
+	content: counter(h2counter) "." counter(h3counter) "." counter(h4counter) ".\0000a0";
+	counter-increment: h4counter;
+}
+#content h4:only-of-type:before {
+	content: none;
+}
+/* tables */
+#content table {
+	margin-bottom: 2em;
+}
+table.bordered {
+	border: 1px solid #888;
+}
+table.bordered th {
+	border: 1px solid #888;
+	padding: 3px;
+	background-color: #ddd;
+}
+table.bordered td {
+	border: 1px solid #888;
+	padding: 3px;
+	background-color: #fff;
+}
+div.bordered {
+	border: 1px solid #888;
+	display: inline-block;
+}
+
+/* code */
+pre {
+	font-size: 1rem;
+	background-color: #fafafa;
+	padding: 0.3rem;
+}
+pre[class^="language-"] {
+	border: 1px solid #444;
+	background-color: #cbd0db;
+	/*color: #c0c5ce;*/
+	color: #333;
+}
+
+/* icons */
+li.menu-header > a.btn {
+	margin-top: 2px;
 }
 
 /* ******* DIFF ********** */
@@ -79,3 +154,47 @@ ins {
 	text-decoration: none;
 	background-color: #ddffdd;
 }
+
+/* ***** EDIT ***** */
+div#body-content {
+	position: absolute;
+	top: 118px;
+	bottom: 5px;
+	left: 0;
+	right: 0;
+}
+/* textarea */
+textarea#skrivtext {
+	position: absolute;
+	font-family: monospace;
+	margin: 1%; 
+	width: 48%;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	color: #000;
+}
+/* content */
+div#skrivhtml {
+	position: absolute;
+	overflow: auto;
+	margin: 1%;
+	width: 46%;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	border: 1px solid #000;
+	padding: 1%;
+	background-color: #fff;
+}
+/* footnotes */
+div#skrivhtml div.footnotes {
+	margin-top: 2em;
+	border-top: 1px dashed #aaa;
+	padding-top: 1em;
+}
+div#skrivhtml div.footnotes p.footnote {
+	margin: 0;
+	font-size: 0.9em;
+}
+

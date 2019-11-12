@@ -1,6 +1,6 @@
 {include file="inc.header.tpl"}
 
-<script type="text/javascript">{literal}<!--
+<script>{literal}
 	function checkForm() {
 		var ok = true;
 		if (!/^[A-Za-z0-9_\.]+$/.test($("#edit-cachehost").val())) {
@@ -19,7 +19,7 @@
 		else
 			$("input[type='text']").attr("disabled", false);
 	}
-//-->{/literal}</script>
+{/literal}</script>
 
 <div class="container">
 	<h2 style="margin-top: 40px;">Step 2 <small>Memcache server</small></h2>

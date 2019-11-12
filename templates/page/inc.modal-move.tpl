@@ -1,17 +1,25 @@
-<div id="modal-move" class="modal hide fade" data-keyboard="true">
-	<div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h3>Move page</h3>
-	</div>
-	<div class="modal-body">
-		<div style="margin-bottom: 8px;">
-			<i class="icon-home"></i> Homepage
-			<button class="btn" onclick="ark.movePage({$page.id}, 0)">Move</button>
+<div id="modal-move" class="modal" tabindex="-1" role="dialog">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="exampleModalLabel">Move page</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div style="margin-bottom: 8px;" class="clearfix">
+					<button class="btn btn-primary {*float-right*}" style="float: right;" onclick="ark.movePage({$page.id}, 0)">Move</button>
+					<div style="padding-top: 0.5rem; margin-right: 100px;">
+						<i class="fas fa-home"></i> Homepage
+					</div>
+				</div>
+				{$parentSubLevelId=0}
+				{include file="page/getSubLevels.tpl"}
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-secondary" onclick="$('#modal-move').modal('hide')">Cancel</button>
+			</div>
 		</div>
-		{assign var="parentSubLevelId" value=0}
-		{include file="page/getSubLevels.tpl"}
-	</div>
-	<div class="modal-footer">
-		<button class="btn" onclick="$('#modal-move').modal('hide')">Cancel</a>
 	</div>
 </div>

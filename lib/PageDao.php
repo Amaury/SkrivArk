@@ -42,7 +42,10 @@ class PageDao extends \Temma\Dao {
 			$sql .= "AND PageVersion.id = '" . $this->_db->quote($versionId) . "' ";
 		else
 			$sql .= "AND PageVersion.id = Page.currentVersionId ";
-		return ($this->_db->queryOne($sql));
+		$page = $this->_db->queryOne($sql);
+		if ($page)
+			$page['toc'] = !empty($page['toc']) ? json_decode($page['toc'], true) : '';
+		return ($page);
 	}
 	/**
 	 * Returns sub-pages of a given page.
@@ -138,9 +141,10 @@ class PageDao extends \Temma\Dao {
 	 * @param	string	$title		Page's title.
 	 * @param	string	$skriv		SkrivML text.
 	 * @param	string	$html		HTML text.
+	 * @param	array	$toc		Table Of Contents.
 	 * @return	int	Page's identifier.
 	 */
-	public function add($parentId, $creatorId, $title, $skriv, $html) {
+	public function add($parentId, $creatorId, $title, $skriv, $html, $toc) {
 		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
 			SET title = '" . $this->_db->quote($title) . "',
@@ -149,12 +153,19 @@ class PageDao extends \Temma\Dao {
 			    creatorId = '" . $this->_db->quote($creatorId) . "'";
 		$this->_db->exec($sql);
 		$versionId = $this->_db->lastInsertId();
+		// get priority
+		$sql = "SELECT MAX(`priority`) AS prio
+			FROM Page
+			WHERE parentPageId = '" . $this->_db->quote($parentId) . "'";
+		$prio = $this->_db->queryOne($sql);
 		// add entry in Page
 		$id = $this->create(array(
 			'title'			=> $title,
 			'html'			=> $html,
+			'toc'			=> json_encode($toc),
 			'creatorId'		=> $creatorId,
 			'creationDate'		=> substr(date('c'), 0, 19),
+			'priority'		=> ($prio['prio'] + 1),
 			'parentPageId'		=> $parentId,
 			'currentVersionId'	=> $versionId
 		));
@@ -174,8 +185,9 @@ class PageDao extends \Temma\Dao {
 	 * @param	string	$title	Page's title.
 	 * @param	string	$skriv	SkrivML text.
 	 * @param	string	$html	HTML text.
+	 * @param	array	$toc	Table Of Content.
 	 */
-	public function addVersion($id, $userId, $title, $skriv, $html) {
+	public function addVersion($id, $userId, $title, $skriv, $html, $toc) {
 		$sql = "INSERT INTO PageVersion
 			SET title = '" . $this->_db->quote($title) . "',
 			    skriv = '" . $this->_db->quote($skriv) . "',
@@ -187,6 +199,7 @@ class PageDao extends \Temma\Dao {
 		$this->update($id, array(
 			'title'			=> $title,
 			'html'			=> $html,
+			'toc'			=> json_encode($toc),
 			'modifDate'		=> substr(date('c'), 0, 19),
 			'currentVersionId'	=> $versionId
 		));

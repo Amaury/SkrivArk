@@ -1,6 +1,6 @@
 {include file="inc.header.tpl"}
 
-<script type="text/javascript">{literal}<!--
+<script>{literal}
 var adm = new function() {
 	/**
 	 * Send to the server a request to change a user's admin status.
@@ -36,44 +36,38 @@ var adm = new function() {
 			$("#edit-password").removeAttr("disabled");
 	};
 };
-//-->{/literal}</script>
+{/literal}</script>
 
-<div class="container">
-	<h1>My Account</h1>
-	<form method="post" action="/identification/updateAccount" class="form-horizontal">
-		<div class="control-group">
-			<label class="control-label" for="edit-name">Name</label>
-			<div class="controls">
-				<input type="text" id="edit-name" name="name" placeholder="name" value="{$user.name|escape}" />
+<main class="app-main" style="font-size: 1rem;">
+	<div class="container" style="padding-top: 2.4rem;">
+		<h2>My Account</h2>
+		<form method="post" action="/identification/updateAccount" class="form-horizontal">
+			<div class="form-group">
+				<label for="edit-name">Name</label>
+				<input type="text" id="edit-name" class="form-control" name="name" placeholder="name" value="{$user.name|escape}" />
 			</div>
-		</div>
-		<div class="control-group">
-			<label class="control-label" for="edit-email">Email</label>
-			<div class="controls">
-				<input type="text" id="edit-email" name="email" placeholder="email" value="{$user.email|escape}"
+			<div class="form-group">
+				<label for="edit-email">Email</label>
+				<input type="text" id="edit-email" name="email" class="form-control" placeholder="email" value="{$user.email|escape}"
 				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the email address"{/if} />
 			</div>
-		</div>
-		<div class="control-group">
-			<label class="control-label" for="edit-pwd">Password</label>
-			<div class="controls">
-				<input type="password" id="edit-pwd" name="password" placeholder="password"
+			<div class="form-group">
+				<label for="edit-pwd">Password</label>
+				<input type="password" id="edit-pwd" name="password" class="form-control" placeholder="password"
 				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
-		</div>
-		<div class="control-group">
-			<label class="control-label" for="edit-pwd2">Password (again)</label>
-			<div class="controls">
-				<input type="password" id="edit-pwd2" name="password2" placeholder="password"
+			<div class="form-group">
+				<label for="edit-pwd2">Password (again)</label>
+				<input type="password" id="edit-pwd2" name="password2" class="form-control" placeholder="password"
 				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
-		</div>
-		<div class="control-group">
-			<div class="controls">
-				<input type="submit" class="btn btn-primary" value="Update my account" />
+			<div class="control-group">
+				<div class="controls">
+					<input type="submit" class="btn btn-primary" value="Update my account" />
+				</div>
 			</div>
-		</div>
-	</form>
-</div>
+		</form>
+	</div>
+</main>
 
 {include file="inc.footer.tpl"}

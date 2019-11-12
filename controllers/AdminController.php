@@ -89,7 +89,7 @@ class AdminController extends \Temma\Controller {
 				'name'		=> $name,
 				'email'		=> $email,
 				'password'	=> md5($password),
-				'creationDate'	=> date('c')
+				'creationDate'	=> substr(date('c'), 0, 19),
 			));
 		} catch (Exception $e) { }
 		if (!$generate)
