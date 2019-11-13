@@ -15,13 +15,24 @@ class InstallController extends \Temma\Controller {
 			$this->redirect('/install');
 			return (self::EXEC_STOP);
 		}
-		if (!is_a($this->_db, 'FineDatasource')) {
+		// check temma.json
+		$path = realpath(__DIR__ . '/../etc/temma.json');
+		$temma = json_decode(file_get_contents($path), true);
+		$rootController = $temma['application']['rootController'] ?? null;
+		if ($rootController == 'PageController') {
 			$this->redirect('/');
 			return (self::EXEC_STOP);
 		}
-		if (is_writable(__DIR__ . '/../etc/temma.json'))
-			$this->set('editableConfig', true);
-		else {
+		// check files access
+		$writableTemma = is_writable(__DIR__ . '/../etc/temma.json');
+		$writableLog = is_writable(__DIR__ . '/../log');
+		$writableTmp = is_writable(__DIR__ . '/../tmp');
+		$writableSplash = is_writable(__DIR__ . '/../var/splashscreen.html');
+		$this->set('writableTemma', $writableTemma);
+		$this->set('writableLog', $writableLog);
+		$this->set('writableTmp', $writableTmp);
+		$this->set('writableSplash', $writableSplash);
+		if (!$writableTemma || !$writableLog || !$writableTmp || !$writableSplash) {
 			$action = $this->get('ACTION');
 			if (!empty($action)) {
 				$this->redirect('/install');
@@ -35,180 +46,33 @@ class InstallController extends \Temma\Controller {
 	/** Step 1. */
 	public function execStep1() {
 		// set template variables
-		$this->set('dberror', $this->_session->get('dberror'));
-		$this->set('dbhostname', $this->_session->get('dbhostname'));
-		$this->set('dbname', $this->_session->get('dbname'));
-		$this->set('dbuser', $this->_session->get('dbuser'));
-		$this->set('dbpassword', $this->_session->get('dbpassword'));
-		// reset session variables
-		$this->_session->set('dberror', null);
-		$this->_session->set('dbhostname', null);
-		$this->_session->set('dbname', null);
-		$this->_session->set('dbuser', null);
-		$this->_session->set('dbpassword', null);
+		$this->set('dberror', $_GET['dberror']) ?? null;
+		$this->set('dbhostname', $_GET['dbhostname'] ?? null);
+		$this->set('dbname', $_GET['dbname'] ?? null);
+		$this->set('dbuser', $_GET['dbuser'] ?? null);
+		$this->set('dbpassword', $_GET['dbpassword'] ?? null);
 	}
 	/** Store step 1 data. */
 	public function execProceedStep1() {
-		$this->_session->set('dbhostname', trim($_POST['dbhostname']));
-		$this->_session->set('dbname', trim($_POST['dbname']));
-		$this->_session->set('dbuser', trim($_POST['dbuser']));
-		$this->_session->set('dbpassword', trim($_POST['dbpassword']));
+		$dbhostname = trim($_POST['dbhostname'] ?? null);
+		$dbname = trim($_POST['dbname'] ?? null);
+		$dbuser = trim($_POST['dbuser'] ?? null);
+		$dbpassword = trim($_POST['dbpassword'] ?? null);
 		// try to connect
-		$dsn = 'mysqli://' . $_POST['dbuser'] . ':' . $_POST['dbpassword'] . '@' . $_POST['dbhostname'] . '/' . $_POST['dbname'];
+		$dsn = "mysqli://$dbuser:$dbpassword@$dbhostname/$dbname";
 		try {
+			// connexion
 			$db = FineDatabase::factory($dsn);
 			$db->charset('utf8');
-			$this->redirect('/install/step2');
+			$db->exec("DO 1");
 		} catch (Exception $e) {
 			$this->_session->set('dberror', true);
-			$this->redirect('/install/step1');
-		}
-	}
-	/** Step 2. */
-	public function execStep2() {
-		// set template variables
-		$this->set('cacheerror', $this->_session->get('cacheerror'));
-		$this->set('cachehost', $this->_session->get('cachehost'));
-		$this->set('cacheport', $this->_session->get('cacheport'));
-		// reset session variables
-		$this->_session->set('cacheerror', null);
-		$this->_session->set('cachehost', null);
-		$this->_session->set('cacheport', null);
-	}
-	/** Store step 2 data. */
-	public function execProceedStep2() {
-		$this->redirect('/install/step3');
-		if (isset($_POST['nocache']) && $_POST['nocache'] == 1) {
-			$this->_session->set('nocache', true);
+			$this->redirect('/install/step1?dberror=1&dbhostname=' . urlencode($dbhostname) .
+			                '&dbname=' . urlencode($dbname) . '&dbuser=' . urlencode($dbuser) .
+			                '&dbpassword=' . urlencode($dbpassword));
 			return;
 		}
-		$this->_session->set('cachehost', trim($_POST['cachehost']));
-		$this->_session->set('cacheport', trim($_POST['cacheport']));
-		// try to connect
-		$dsn = 'memcache://' . $_POST['cachehost'] . ':' . $_POST['cacheport'];
-		$enabled = false;
-		try {
-			$cache = FineCache::factory($dsn);
-			if (!$cache->isEnabled())
-				throw new Exception();
-			$val = mt_rand();
-			$id = 'test-skrivark-' . uniqid();
-			$cache->set($id, $val);
-			if ($cache->get($id) != $val)
-				throw new Exception();
-		} catch (Exception $e) {
-			$this->_session->set('cacheerror', true);
-			$this->redirect('/install/step2');
-		}
-	}
-	/** Step 3. */
-	public function execStep3() {
-		// set template variables
-		$this->set('paramerror', $this->_session->get('paramerror'));
-		$this->set('sitename', $this->_session->get('sitename'));
-		$this->set('baseurl', $this->_session->get('baseurl'));
-		$this->set('emailsender', $this->_session->get('emailsender'));
-		$this->set('demomode', $this->_session->get('demomode'));
-		$this->set('titledurl', $this->_session->get('titledurl'));
-		$this->set('allowreadonly', $this->_session->get('allowreadonly'));
-		$this->set('disqus', $this->_session->get('disqus'));
-		$this->set('googleanalytics', $this->_session->get('googleanalytics'));
-		$this->set('loglevel', $this->_session->get('loglevel'));
-		// reset session variables
-		$this->_session->set('paramerror', null);
-		$this->_session->set('sitename', null);
-		$this->_session->set('baseurl', null);
-		$this->_session->set('emailsender', null);
-		$this->_session->set('demomode', null);
-		$this->_session->set('titledurl', null);
-		$this->_session->set('allowreadonly', null);
-		$this->_session->set('disqus', null);
-		$this->_session->set('googleanalytics', null);
-		$this->_session->set('loglevel', null);
-	}
-	/** Store step 3 data. */
-	public function execProceedStep3() {
-		$this->_session->set('sitename', trim($_POST['sitename']));
-		$this->_session->set('baseurl', trim($_POST['baseurl']));
-		$this->_session->set('emailsender', trim($_POST['emailsender']));
-		$this->_session->set('demomode', (isset($_POST['demomode']) && $_POST['demomode'] == 1) ? true : false);
-		$this->_session->set('titledurl', (isset($_POST['titledurl']) && $_POST['titledurl'] == 1) ? true : false);
-		$this->_session->set('allowreadonly', (isset($_POST['allowreadonly']) && $_POST['allowreadonly'] == 1) ? true : false);
-		$this->_session->set('disqus', trim($_POST['disqus']));
-		$this->_session->set('googleanalytics', trim($_POST['googleanalytics']));
-		$this->_session->set('loglevel', trim($_POST['loglevel']));
-		// check params
-		if (!isset($_POST['sitename']) || !isset($_POST['baseurl']) || !isset($_POST['emailsender'])) {
-			$this->_session->set('paramerror', true);
-			$this->redirect('/install/step2');
-			return;
-		}
-		$this->redirect('/install/step4');
-	}
-	/** Step 4. */
-	public function execStep4() {
-		// set template variables
-		$this->set('adminerror', $this->_session->get('adminerror'));
-		$this->set('adminname', $this->_session->get('adminname'));
-		$this->set('adminemail', $this->_session->get('adminemail'));
-		// reset session variables
-		$this->_session->set('adminerror', null);
-		$this->_session->set('adminname', null);
-		$this->_session->set('adminemail', null);
-	}
-	/** Create configuration. */
-	public function execProceedStep4() {
-		// check params
-		if (!isset($_POST['adminname']) || !isset($_POST['adminemail']) || !isset($_POST['adminpassword']) || strlen($_POST['adminpassword']) < 6) {
-			$this->_session->set('adminname', trim($_POST['adminname']));
-			$this->_session->set('adminemail', trim($_POST['adminemail']));
-			$this->_session->set('adminerror', true);
-			$this->redirect('/install/step4');
-			return;
-		}
-		// create config file
-		$loglevel = $this->_session->get('loglevel');
-		$dbDsn = 'mysqli://' . $this->_session->get('dbuser') . ':' . $this->_session->get('dbpassword') .
-			 '@' . $this->_session->get('dbhostname') . '/' . $this->_session->get('dbname');
-		$cacheDsn = 'memcache://' . $this->_session->get('cachehost') . ':' . $this->_session->get('cacheport');
-		$nocache = $this->_session->get('nocache');
-		$config = array(
-			'application' => array(
-				'dataSources' => array(
-					'_db'	 => $dbDsn
-				),
-				'sessionName'	 => 'ArkSession',
-				'rootController' => 'PageController'
-			),
-			'loglevels' => array(
-				'finebase'	=> $loglevel,
-				'temma'		=> $loglevel,
-				'skriv'		=> $loglevel
-			),
-			'plugins' => array(
-				'_pre' => array(
-					'IdentificationController'
-				)
-			),
-			'autoimport' => array(
-				'sitename'		=> $this->_session->get('sitename'),
-				'baseURL'		=> $this->_session->get('baseurl'),
-				'emailSender'		=> $this->_session->get('emailsender'),
-				'demoMode'		=> $this->_session->get('demomode'),
-				'titledURL'		=> $this->_session->get('titledurl'),
-				'allowReadOnly'		=> $this->_session->get('allowreadonly'),
-				'disqus'		=> $this->_session->get('disqus'),
-				'googleAnalytics'	=> $this->_session->get('googleanalytics')
-			)
-		);
-		if (!$nocache) {
-			$config['application']['dataSources']['_cache'] = $cacheDsn;
-			$config['application']['sessionSource'] = '_cache';
-		}
-		$json = TextUtil::JsonEncode($config);
-		file_put_contents(__DIR__ . '/../etc/temma.json', $json);
 		// create database
-		$db = FineDatabase::factory($dbDsn);
 		$sql = file_get_contents(__DIR__ . '/../etc/database.sql');
 		$sql = explode(';', $sql);
 		foreach ($sql as $request) {
@@ -216,24 +80,179 @@ class InstallController extends \Temma\Controller {
 			if (!empty($request))
 				$db->exec($request);
 		}
-		if ($this->_session->get('demomode')) {
+		// update temma.json
+		$path = realpath(__DIR__ . '/../etc/temma.json');
+		$temma = json_decode(file_get_contents($path), true);
+		$temma['application']['dataSources']['_db'] = $dsn;
+		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		$this->redirect('/install/step2');
+	}
+	/** Step 2. */
+	public function execStep2() {
+		// set template variables
+		$this->set('cacheerror', $_GET['cacheerror'] ?? null);
+		$this->set('cacheserver', $_GET['cacheserver'] ?? null);
+		$this->set('cachehost', $_GET['cachehost'] ?? null);
+		$this->set('cacheport', $_GET['cacheport'] ?? null);
+	}
+	/** Store step 2 data. */
+	public function execProceedStep2() {
+		$cacheserver = trim($_POST['cacheserver'] ?? null);
+		$cachehost = trim($_POST['cachehost'] ?? null);
+		$cacheport = trim($_POST['cacheport'] ?? null);
+		// read temma.json
+		$path = realpath(__DIR__ . '/../etc/temma.json');
+		$temma = json_decode(file_get_contents($path), true);
+		// process
+		$cacheerror = false;
+		if ($cacheserver == 'nocache') {
+			// no cache server
+			unset($temma['application']['dataSources']['_cache']);
+			unset($temma['application']['dataSources']['_ndb']);
+			unset($temma['application']['sessionSource']);
+		} else if ($cacheserver == 'memcache') {
+			// memcache server
+			$dsn = "memcache://$cachehost:$cacheport";
+			$enabled = false;
+			try {
+				$cache = FineCache::factory($dsn);
+				if (!$cache->isEnabled())
+					throw new Exception();
+				$val = mt_rand();
+				$id = 'test-skrivark-' . uniqid();
+				$cache->set($id, $val);
+				if ($cache->get($id) != $val)
+					throw new \Exception();
+				unset($temma['application']['dataSources']['_ndb']);
+				$temma['application']['dataSources']['_cache'] = $dsn;
+				$temma['application']['sessionSource'] = '_cache';
+			} catch (\Exception $e) {
+				$cacheerror = true;
+			}
+		} else if ($cacheserver == 'redis') {
+			// redis server
+			$dsn = "redis://$cachehost:$cacheport";
+			try {
+				$ndb = FineNDB::factory($dsn);
+				$val = mt_rand();
+				$id = 'test-skrivark-' . uniqid();
+				$ndb->set($id, $val);
+				if ($ndb->get($id) != $val)
+					throw new \Exception();
+				unset($temma['application']['dataSources']['_cache']);
+				$temma['application']['dataSources']['_ndb'] = $dsn;
+				$temma['application']['sessionSource'] = '_ndb';
+			} catch (\Exception $e) {
+				$cacheerror = true;
+			}
+		}
+		if ($cacheerror) {
+			$this->redirect('/install/step2?cacheerror=1&cacheserver=' . urlencode($cacheserver) .
+			                '&cachehost=' . urlencode($cachehost) . '&cacheport=' . urlencode($cacheport));
+			return;
+		}
+		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		$this->redirect('/install/step3');
+	}
+	/** Step 3. */
+	public function execStep3() {
+		// set template variables
+		$this->set('paramerror', $_GET['paramerror'] ?? null);
+		$this->set('sitename', $_GET['sitename'] ?? null);
+		$this->set('baseurl', $_GET['baseurl'] ?? null);
+		$this->set('emailsender', $_GET['emailsender'] ?? null);
+		$this->set('demomode', $_GET['demomode'] ?? null);
+		$this->set('titledurl', $_GET['titledurl'] ?? null);
+		$this->set('allowreadonly', $_GET['allowreadonly'] ?? null);
+		$this->set('disqus', $_GET['disqus'] ?? null);
+		$this->set('googleanalytics', $_GET['googleanalytics'] ?? null);
+		$this->set('loglevel', $_GET['loglevel'] ?? null);
+	}
+	/** Store step 3 data. */
+	public function execProceedStep3() {
+		$sitename = trim($_POST['sitename'] ?? null);
+		$baseurl = trim($_POST['baseurl'] ?? null);
+		$emailsender = trim($_POST['emailsender'] ?? null);
+		$demomode = (($_POST['demomode'] ?? 0) == 1) ? true : false;
+		$titledurl = (($_POST['titledurl'] ?? 0) == 1) ? true : false;
+		$allowreadonly = (($_POST['allowreadonly'] ?? 0) == 1) ? true : false;
+		$disqus = trim($_POST['disqus'] ?? null);
+		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
+		$loglevel = trim($_POST['loglevel'] ?? null);
+		// check params
+		if (empty($sitename) || empty($baseurl) || empty($emailsender)) {
+			$this->redirect('/install/step2?paramerror=1&sitename=' . urlencode($sitename) .
+			                '&baseurl=' . urlencode($baseurl) . '&emailsender=' . urlencode($emailsender) .
+			                '&demomode=' . urlencode($demomode) . '&titledurl=' . urlencode($titledurl) .
+			                '&allowreadonly=' . urlencode($allowreadonly) . '&disqus=' . urlencode($disqus) .
+			                '&googleanalytics=' . urlencode($googleanalytics) . '&loglevel=' . urlencode($loglevel));
+			return;
+		}
+		// read temma.json
+		$path = realpath(__DIR__ . '/../etc/temma.json');
+		$temma = json_decode(file_get_contents($path), true);
+		// update temma.json
+		$temma['autoimport'] = [
+			'sitename'		=> $sitename,
+			'baseURL'		=> $baseurl,
+			'emailSender'		=> $emailsender,
+			'demoMode'		=> $demomode,
+			'titledURL'		=> $titledurl,
+			'allowReadOnly'		=> $allowreadonly,
+			'disqus'		=> $disqus,
+			'googleAnalytics'	=> $googleanalytics,
+		];
+		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		// management of the demo mode
+		if ($demomode) {
+			// create the demo user
+			// fill the database with demo data
 			$sql = file_get_contents(__DIR__ . '/../etc/demo-data.sql');
 			$sql = explode(';', $sql);
 			foreach ($sql as $request) {
 				$request = trim($request);
 				if (!empty($request))
-					$db->exec($request);
+					$this->_db->exec($request);
 			}
+		}
+		$this->redirect('/install/step4');
+	}
+	/** Step 4. */
+	public function execStep4() {
+		// set template variables
+		$this->set('adminerror', $_GET['adminerror'] ?? null);
+		$this->set('adminname', $_GET['adminname'] ?? null);
+		$this->set('adminemail', $_GET['adminemail'] ?? null);
+	}
+	/** Create configuration. */
+	public function execProceedStep4() {
+		$adminname = trim($_POST['adminname'] ?? '');
+		$adminemail = trim($_POST['adminemail'] ?? '');
+		$adminpassword = trim($_POST['adminpassword'] ?? '');
+		// check params
+		if (empty($adminname) || empty($adminemail) || empty($adminpassword) || strlen($adminpassword) < 6) {
+			$this->redirect('/install/step4?adminerror=1&adminname=' . urlencode($adminname) .
+			                '&adminemail=' . urlencode($adminemail));
+			return;
 		}
 		// create admin user
 		$sql = "INSERT INTO User
 			SET admin = TRUE,
-			    name = '" . $db->quote($_POST['adminname']) . "',
-			    email = '" . $db->quote($_POST['adminemail']) . "',
-			    password = '" . $db->quote(md5($_POST['adminpassword'])) . "',
+			    name = '" . $this->_db->quote($_POST['adminname']) . "',
+			    email = '" . $this->_db->quote($_POST['adminemail']) . "',
+			    password = '" . $this->_db->quote(md5($_POST['adminpassword'])) . "',
 			    creationDate = NOW(),
 			    modifDate = NOW()";
-		$db->exec($sql);
+		$this->_db->exec($sql);
+		// update temma.json
+		$path = realpath(__DIR__ . '/../etc/temma.json');
+		$temma = json_decode(file_get_contents($path), true);
+		$temma['application']['rootController'] = 'PageController';
+		$temma['plugins'] = [
+			'_pre' => ['IdentificationController'],
+		];
+		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		// redirect
 		$this->redirect('/install/done');
 	}
 	/** "Thank you" page. */

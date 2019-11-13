@@ -19,34 +19,34 @@
 	}
 {/literal}</script>
 
-<div class="container">
-	<h2 style="margin-top: 40px;">Step 4 <small>Default admnistrator user</small></h2>
-	{if $adminerror}
-		<div id="panel-error" class="alert alert-error">
-			Please check your parameters.
-		</div>
-	{/if}
-	<form method="post" action="/install/proceedStep4" onsubmit="return checkForm()" onkeypress="$('.control-group').removeClass('error'); $('#panel-error').hide()" class="form-horizontal">
-		<div class="control-group">
-			<label class="control-label" for="edit-adminname">Name</label>
-			<div class="controls"><input type="text" id="edit-adminname" name="adminname" placeholder="Your name"
-			 value="{$adminname|escape}" class="input-xlarge" /></div>
-		</div>
-		<div class="control-group">
-			<label class="control-label" for="edit-adminemail">Email address</label>
-			<div class="controls"><input type="text" id="edit-adminemail" name="adminemail" placeholder="user@domain.com"
-			 value="{$adminemail|escape}" class="input-xlarge" /></div>
-		</div>
-		<div class="control-group">
-			<label class="control-label" for="edit-adminpassword">Password</label>
-			<div class="controls"><input type="password" id="edit-adminpassword" name="adminpassword" value="" placeholder="password" class="input-large" /></div>
-		</div>
-		<div class="control-group">
-			<div class="controls">
-				<input type="submit" class="btn btn-primary" value="Create configuration" />
+<main class="app-main" style="font-size: 1rem;">
+	<div class="container" style="padding-top: 2.4rem;">
+		<h2 style="margin-top: 40px;">Step 4 <small>Default admnistrator user</small></h2>
+		{if $adminerror}
+			<div id="panel-error" class="card bg-danger p-3">
+				Please check your parameters.
 			</div>
-		</div>
-	</form>
-</div>
+		{/if}
+		<form id="form-step4" method="post" action="/install/proceedStep4" onsubmit="return checkForm()" onkeypress="$('.form-group').removeClass('error'); $('#panel-error').hide()">
+			<div class="form-group">
+				<label for="edit-adminname">Name</label>
+				<input type="text" id="edit-adminname" name="adminname" placeholder="Your name"
+				 value="{$adminname|escape}" class="form-control" />
+			</div>
+			<div class="form-group">
+				<label for="edit-adminemail">Email address</label>
+				<input type="text" id="edit-adminemail" name="adminemail" placeholder="user@domain.com"
+				 value="{$adminemail|escape}" class="form-control" />
+			</div>
+			<div class="form-group">
+				<label for="edit-adminpassword">Password</label>
+				<input type="password" id="edit-adminpassword" name="adminpassword" value="" placeholder="password" class="form-control" />
+			</div>
+			<div class="form-group">
+				<input type="submit" class="btn btn-primary" value="Create user" />
+			</div>
+		</form>
+	</div>
+</main>
 
 {include file="inc.footer.tpl"}

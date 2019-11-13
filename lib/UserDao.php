@@ -30,5 +30,19 @@ class UserDao extends \Temma\Dao {
 			return ($user[0]);
 		return (null);
 	}
+	/**
+	 * Get admin users.
+	 * @return	array	List of associative arrays.
+	 */
+	public function getAdministrators() {
+		$sql = "SELECT id,
+		               name,
+		               email
+			FROM User
+			WHERE admin = TRUE
+			ORDER BY id";
+		$users = $this->_db->queryAll($sql);
+		return ($users);
+	}
 }
 
