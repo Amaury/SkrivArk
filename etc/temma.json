@@ -6,11 +6,11 @@
 		},
 		"sessionName": "ArkSession",
 		"sessionSource": "_cache",
-		"rootController": "InstallController"
+		"rootController": "Install"
 	},
 	"loglevels": {
-		"finebase": "WARN",
-		"temma": "WARN",
-		"skriv": "WARN"
+		"Temma/Base": "DEBUG",
+		"Temma/Web": "DEBUG",
+		"skriv": "DEBUG"
 	}
 }
