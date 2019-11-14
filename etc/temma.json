@@ -1,11 +1,11 @@
 {
 	"application": {
 		"dataSources": {
-			"_db": "dummy://",
-			"_cache": "dummy://"
+			"db": "dummy://",
+			"cache": "dummy://"
 		},
 		"sessionName": "ArkSession",
-		"sessionSource": "_cache",
+		"sessionSource": "cache",
 		"rootController": "Install",
 		"loader": "\\Ark\\Loader"
 	},

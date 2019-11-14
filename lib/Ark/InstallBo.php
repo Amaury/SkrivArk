@@ -96,7 +96,7 @@ class InstallBo {
 	public function updateConfigDatabase(string $dbhostname, string $dbname, string $dbuser, string $dbpassword) /* : void */ {
 		$temma = $this->_readConf();
 		$dsn = "mysql://$dbuser:$dbpassword@$dbhostname/$dbname";
-                $temma['application']['dataSources']['_db'] = $dsn;
+                $temma['application']['dataSources']['db'] = $dsn;
 		$this->_writeConf($temma);
 	}
 	/**
@@ -110,43 +110,31 @@ class InstallBo {
 		$temma = $this->_readConf();
 		if ($server == 'nocache') {
 			// no cache server
-			unset($temma['application']['dataSources']['_cache']);
-			unset($temma['application']['dataSources']['_ndb']);
+			unset($temma['application']['dataSources']['cache']);
 			unset($temma['application']['sessionSource']);
-		} else if ($server == 'memcache') {
-			// memcache server
-			$dsn = "memcache://$cachehost:$cacheport";
-			try {
+		} else {
+			$dsn = "$server://$host:$port";
+			if ($server == 'memcache') {
+				// memcache server
 				$cache = \Temma\Base\Cache::factory($dsn);
 				if (!$cache->isEnabled())
-					throw new Exception();
+					throw new \Exception();
 				$val = mt_rand();
 				$id = 'test-skrivark-' . uniqid();
 				$cache->set($id, $val);
 				if ($cache->get($id) != $val)
 					throw new \Exception();
-			} catch (\Exception $e) {
-				throw $e;
-			}
-			unset($temma['application']['dataSources']['_ndb']);
-			$temma['application']['dataSources']['_cache'] = $dsn;
-			$temma['application']['sessionSource'] = '_cache';
-		} else if ($server == 'redis') {
-			// redis server
-			$dsn = "redis://$cachehost:$cacheport";
-			try {
+			} else if ($server == 'redis') {
+				// redis server
 				$ndb = \Temma\Base\NDatabase::factory($dsn);
 				$val = mt_rand();
 				$id = 'test-skrivark-' . uniqid();
 				$ndb->set($id, $val);
 				if ($ndb->get($id) != $val)
 					throw new \Exception();
-			} catch (\Exception $e) {
-				throw $e;
 			}
-			unset($temma['application']['dataSources']['_cache']);
-			$temma['application']['dataSources']['_ndb'] = $dsn;
-			$temma['application']['sessionSource'] = '_ndb';
+			$temma['application']['dataSources']['cache'] = $dsn;
+			$temma['application']['sessionSource'] = 'cache';
 		}
 		$this->_writeConf($temma);
 	}
@@ -172,13 +160,13 @@ class InstallBo {
 		$temma['loglevels']['ark'] = $loglevel;
 		$temma['autoimport'] = [
 			'sitename'        => $sitename,
-			'baseURL'         => $baseurl,
-			'emailSender'     => $emailsender,
+			'baseURL'         => $baseUrl,
+			'emailSender'     => $emailSender,
 			'demoMode'        => $demomode,
-			'titledURL'       => $titledurl,
-			'allowReadOnly'   => $allowreadonly,
+			'titledURL'       => $titledUrl,
+			'allowReadOnly'   => $allowReadOnly,
 			'disqus'          => $disqus,
-			'googleAnalytics' => $googleanalytics,
+			'googleAnalytics' => $gAnalytics,
 		];
 		$this->_writeConf($temma);
 		// management of the demo mode
@@ -189,7 +177,7 @@ class InstallBo {
 			foreach ($sql as $request) {
 				$request = trim($request);
 				if (!empty($request))
-					$this->_loader->dataSources['db']->exec($request);
+					$this->_loader->config->dataSources['db']->exec($request);
 			}
 		}
 	}
