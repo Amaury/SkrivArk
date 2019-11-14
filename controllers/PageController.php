@@ -8,7 +8,7 @@
  * @package	SkrivArk
  * @subpackage	Controllers
  */
-class PageController extends \Temma\Controller {
+class Page extends \Temma\Web\Controller {
 	/** User DAO. */
 	private $_userDao = null;
 	/** Page DAO. */

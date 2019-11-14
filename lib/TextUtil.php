@@ -17,15 +17,15 @@ class TextUtil {
 	static public function isValidHtmlSyntax($html) {
 		if (empty($html))
 			return (true);
-		$html = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-			<html lang="fr-FR">
+		$html = '<!DOCTYPE html>
+			 <html lang="en">
 				<head>
 					<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 				</head>
 				<body>
 					' . $html . '
 				</body>
-			</html>';
+			 </html>';
 		try {
 			libxml_use_internal_errors(true);
 			$xmlObj = new \SimpleXMLElement($html);
@@ -110,66 +110,6 @@ class TextUtil {
 		$txt = trim($txt);
 		$txt = empty($txt) ? '-' : $txt;
 		return ($txt);
-	}
-	/**
-	 * Returns a human-readable JSON-encoded string.
-	 * @param	mixed	$data	Data to encode.
-	 * @param	int	$indent	(optional) Indent level.
-	 * @return	string	The encoded string.
-	 */
-	static public function JsonEncode($data, $indent=0) {
-		$result = '';
-		$indent++;
-		if (is_null($data)) {
-			$result = 'null';
-		} else if (is_bool($data)) {
-			$result = $data ? 'true' : 'false';
-		} else if (is_int($data) || is_float($data)) {
-			$result =  (string)$data;
-		} else if (is_string($data)) {
-			$result =  '"' . addcslashes($data, '"/') . '"';
-		} else if (is_array($data)) {
-			// keys check
-			$numericKeys = true;
-			$i = 0;
-			foreach ($data as $key => $subdata) {
-				if (!is_numeric($key) || $key != $i) {
-					$numericKeys = false;
-					break;
-				}
-				$i++;
-			}
-			// écriture
-			$result = ($numericKeys ? "[" : "{") . "\n";
-			$loopNbr = 1;
-			foreach ($data as $key => $subdata) {
-				$result .= self::_indent($indent);
-				if (!$numericKeys)
-					$result .= '"' . addcslashes($key, '"\'') . '": ';
-				$result .= self::JsonEncode($subdata, $indent);
-				if ($loopNbr < count($data))
-					$result .= ',';
-				$result .= "\n";
-				$loopNbr++;
-			}
-			$result .= self::_indent($indent - 1);
-			$result .= $numericKeys ? ']' : '}';
-		} else
-			throw new Exception("Non-scalar data\n" . print_r($data, true));
-		$indent--;
-		return ($result);
-	}
-
-	/* ************ PRIVATE METHODS ************** */
-	/**
-	 * Add the given number of tabulations.
-	 * @param	int	$nbr	Number of indentations.
-	 * @return	string	The needed tabulations.
-	 */
-	static private function _indent($nbr) {
-		if ($nbr > 0)
-			return (str_repeat("\t", $nbr));
-		return ('');
 	}
 }
 

@@ -1,175 +1,106 @@
 <?php
 
+use \Temma\Base\Log as TµLog;
+
 /**
  * Installation controller.
  *
  * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2013, Amaury Bouchard
+ * @copyright	© 2013-2019, Amaury Bouchard
  * @package	SkrivArk
  * @subpackage	Controllers
  */
-class InstallController extends \Temma\Controller {
+class Install extends \Temma\Web\Controller {
 	/** Init. */
-	public function init() {
-		if ($this->get('URL') == '/') {
+	public function __wakeup() {
+		if ($this['URL'] == '/') {
 			$this->redirect('/install');
 			return (self::EXEC_STOP);
 		}
 		// check temma.json
-		$path = realpath(__DIR__ . '/../etc/temma.json');
-		$temma = json_decode(file_get_contents($path), true);
-		$rootController = $temma['application']['rootController'] ?? null;
-		if ($rootController == 'PageController') {
+		if ($this->_loader->installBo->isInstalled()) {
+			TµLog::log('ark', 'INFO', "Try to install an already installed site.");
 			$this->redirect('/');
-			return (self::EXEC_STOP);
+			return (self::EXEC_HALT);
 		}
 		// check files access
-		$writableTemma = is_writable(__DIR__ . '/../etc/temma.json');
-		$writableLog = is_writable(__DIR__ . '/../log');
-		$writableTmp = is_writable(__DIR__ . '/../tmp');
-		$writableSplash = is_writable(__DIR__ . '/../var/splashscreen.html');
-		$this->set('writableTemma', $writableTemma);
-		$this->set('writableLog', $writableLog);
-		$this->set('writableTmp', $writableTmp);
-		$this->set('writableSplash', $writableSplash);
-		if (!$writableTemma || !$writableLog || !$writableTmp || !$writableSplash) {
-			$action = $this->get('ACTION');
-			if (!empty($action)) {
-				$this->redirect('/install');
-				return (self::EXEC_STOP);
-			}
+		$this['filesAccessRights'] = $this->_loader->installBo->checkFilesAccessRights();
+		if ($this['filesAccessRights'] !== true && !empty($this['ACTION'])) {
+			$this->redirect('/install');
+			return (self::EXEC_HALT);
 		}
 	}
 	/** Main page. */
-	public function execIndex() {
+	public function index() {
 	}
 	/** Step 1. */
-	public function execStep1() {
+	public function step1() {
 		// set template variables
-		$this->set('dberror', $_GET['dberror']) ?? null;
-		$this->set('dbhostname', $_GET['dbhostname'] ?? null);
-		$this->set('dbname', $_GET['dbname'] ?? null);
-		$this->set('dbuser', $_GET['dbuser'] ?? null);
-		$this->set('dbpassword', $_GET['dbpassword'] ?? null);
+		$this['dberror'] = $_GET['dberror'] ?? null;
+		$this['dbhostname'] = $_GET['dbhostname'] ?? null;
+		$this['dbname'] = $_GET['dbname'] ?? null;
+		$this['dbuser'] = $_GET['dbuser'] ?? null;
+		$this['dbpassword'] = $_GET['dbpassword'] ?? null;
 	}
 	/** Store step 1 data. */
-	public function execProceedStep1() {
+	public function proceedStep1() {
 		$dbhostname = trim($_POST['dbhostname'] ?? null);
 		$dbname = trim($_POST['dbname'] ?? null);
 		$dbuser = trim($_POST['dbuser'] ?? null);
 		$dbpassword = trim($_POST['dbpassword'] ?? null);
 		// try to connect
-		$dsn = "mysqli://$dbuser:$dbpassword@$dbhostname/$dbname";
-		try {
-			// connexion
-			$db = FineDatabase::factory($dsn);
-			$db->charset('utf8');
-			$db->exec("DO 1");
-		} catch (Exception $e) {
-			$this->_session->set('dberror', true);
+		$db = $this->_loader->installBo->checkDatabaseParameters($dbhostname, $dbname, $dbuser, $dbpassword);
+		if (!$db) {
 			$this->redirect('/install/step1?dberror=1&dbhostname=' . urlencode($dbhostname) .
 			                '&dbname=' . urlencode($dbname) . '&dbuser=' . urlencode($dbuser) .
 			                '&dbpassword=' . urlencode($dbpassword));
-			return;
+			return (self::EXEC_HALT);
 		}
 		// create database
-		$sql = file_get_contents(__DIR__ . '/../etc/database.sql');
-		$sql = explode(';', $sql);
-		foreach ($sql as $request) {
-			$request = trim($request);
-			if (!empty($request))
-				$db->exec($request);
-		}
+		$this->_loader->installBo->createDatabase($db);
 		// update temma.json
-		$path = realpath(__DIR__ . '/../etc/temma.json');
-		$temma = json_decode(file_get_contents($path), true);
-		$temma['application']['dataSources']['_db'] = $dsn;
-		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		$this->_loader->installBo->updateConfigDatabase($dbhostname, $dbname, $dbuser, $dbpassword);
 		$this->redirect('/install/step2');
 	}
 	/** Step 2. */
-	public function execStep2() {
+	public function step2() {
 		// set template variables
-		$this->set('cacheerror', $_GET['cacheerror'] ?? null);
-		$this->set('cacheserver', $_GET['cacheserver'] ?? null);
-		$this->set('cachehost', $_GET['cachehost'] ?? null);
-		$this->set('cacheport', $_GET['cacheport'] ?? null);
+		$this['cacheerror'] = $_GET['cacheerror'] ?? null;
+		$this['cacheserver'] = $_GET['cacheserver'] ?? null;
+		$this['cachehost'] = $_GET['cachehost'] ?? null;
+		$this['cacheport'] = $_GET['cacheport'] ?? null;
 	}
 	/** Store step 2 data. */
-	public function execProceedStep2() {
+	public function proceedStep2() {
 		$cacheserver = trim($_POST['cacheserver'] ?? null);
 		$cachehost = trim($_POST['cachehost'] ?? null);
 		$cacheport = trim($_POST['cacheport'] ?? null);
-		// read temma.json
-		$path = realpath(__DIR__ . '/../etc/temma.json');
-		$temma = json_decode(file_get_contents($path), true);
-		// process
-		$cacheerror = false;
-		if ($cacheserver == 'nocache') {
-			// no cache server
-			unset($temma['application']['dataSources']['_cache']);
-			unset($temma['application']['dataSources']['_ndb']);
-			unset($temma['application']['sessionSource']);
-		} else if ($cacheserver == 'memcache') {
-			// memcache server
-			$dsn = "memcache://$cachehost:$cacheport";
-			$enabled = false;
-			try {
-				$cache = FineCache::factory($dsn);
-				if (!$cache->isEnabled())
-					throw new Exception();
-				$val = mt_rand();
-				$id = 'test-skrivark-' . uniqid();
-				$cache->set($id, $val);
-				if ($cache->get($id) != $val)
-					throw new \Exception();
-				unset($temma['application']['dataSources']['_ndb']);
-				$temma['application']['dataSources']['_cache'] = $dsn;
-				$temma['application']['sessionSource'] = '_cache';
-			} catch (\Exception $e) {
-				$cacheerror = true;
-			}
-		} else if ($cacheserver == 'redis') {
-			// redis server
-			$dsn = "redis://$cachehost:$cacheport";
-			try {
-				$ndb = FineNDB::factory($dsn);
-				$val = mt_rand();
-				$id = 'test-skrivark-' . uniqid();
-				$ndb->set($id, $val);
-				if ($ndb->get($id) != $val)
-					throw new \Exception();
-				unset($temma['application']['dataSources']['_cache']);
-				$temma['application']['dataSources']['_ndb'] = $dsn;
-				$temma['application']['sessionSource'] = '_ndb';
-			} catch (\Exception $e) {
-				$cacheerror = true;
-			}
-		}
-		if ($cacheerror) {
+		try {
+			// update temma.json
+			$this->_loader->installBo->updateConfigSession($cacheserver, $cachehost, $cacheport);
+		} catch (\Exception $e) {
 			$this->redirect('/install/step2?cacheerror=1&cacheserver=' . urlencode($cacheserver) .
 			                '&cachehost=' . urlencode($cachehost) . '&cacheport=' . urlencode($cacheport));
-			return;
+			return (self::EXEC_HALT);
 		}
-		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
 		$this->redirect('/install/step3');
 	}
 	/** Step 3. */
-	public function execStep3() {
+	public function step3() {
 		// set template variables
-		$this->set('paramerror', $_GET['paramerror'] ?? null);
-		$this->set('sitename', $_GET['sitename'] ?? null);
-		$this->set('baseurl', $_GET['baseurl'] ?? null);
-		$this->set('emailsender', $_GET['emailsender'] ?? null);
-		$this->set('demomode', $_GET['demomode'] ?? null);
-		$this->set('titledurl', $_GET['titledurl'] ?? null);
-		$this->set('allowreadonly', $_GET['allowreadonly'] ?? null);
-		$this->set('disqus', $_GET['disqus'] ?? null);
-		$this->set('googleanalytics', $_GET['googleanalytics'] ?? null);
-		$this->set('loglevel', $_GET['loglevel'] ?? null);
+		$this['paramerror'] = $_GET['paramerror'] ?? null;
+		$this['sitename'] = $_GET['sitename'] ?? null;
+		$this['baseurl'] = $_GET['baseurl'] ?? null;
+		$this['emailsender'] = $_GET['emailsender'] ?? null;
+		$this['demomode'] = $_GET['demomode'] ?? null;
+		$this['titledurl'] = $_GET['titledurl'] ?? null;
+		$this['allowreadonly'] = $_GET['allowreadonly'] ?? null;
+		$this['disqus'] = $_GET['disqus'] ?? null;
+		$this['googleanalytics'] = $_GET['googleanalytics'] ?? null;
+		$this['loglevel'] = $_GET['loglevel'] ?? null;
 	}
 	/** Store step 3 data. */
-	public function execProceedStep3() {
+	public function proceedStep3() {
 		$sitename = trim($_POST['sitename'] ?? null);
 		$baseurl = trim($_POST['baseurl'] ?? null);
 		$emailsender = trim($_POST['emailsender'] ?? null);
@@ -180,52 +111,28 @@ class InstallController extends \Temma\Controller {
 		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
 		$loglevel = trim($_POST['loglevel'] ?? null);
 		// check params
-		if (empty($sitename) || empty($baseurl) || empty($emailsender)) {
+		if (empty($sitename) || empty($baseurl) || empty($emailsender) || !in_array($loglevel, ['DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR'])) {
 			$this->redirect('/install/step2?paramerror=1&sitename=' . urlencode($sitename) .
 			                '&baseurl=' . urlencode($baseurl) . '&emailsender=' . urlencode($emailsender) .
 			                '&demomode=' . urlencode($demomode) . '&titledurl=' . urlencode($titledurl) .
 			                '&allowreadonly=' . urlencode($allowreadonly) . '&disqus=' . urlencode($disqus) .
 			                '&googleanalytics=' . urlencode($googleanalytics) . '&loglevel=' . urlencode($loglevel));
-			return;
+			return (self::EXEC_HALT);
 		}
-		// read temma.json
-		$path = realpath(__DIR__ . '/../etc/temma.json');
-		$temma = json_decode(file_get_contents($path), true);
-		// update temma.json
-		$temma['autoimport'] = [
-			'sitename'		=> $sitename,
-			'baseURL'		=> $baseurl,
-			'emailSender'		=> $emailsender,
-			'demoMode'		=> $demomode,
-			'titledURL'		=> $titledurl,
-			'allowReadOnly'		=> $allowreadonly,
-			'disqus'		=> $disqus,
-			'googleAnalytics'	=> $googleanalytics,
-		];
-		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
-		// management of the demo mode
-		if ($demomode) {
-			// create the demo user
-			// fill the database with demo data
-			$sql = file_get_contents(__DIR__ . '/../etc/demo-data.sql');
-			$sql = explode(';', $sql);
-			foreach ($sql as $request) {
-				$request = trim($request);
-				if (!empty($request))
-					$this->_db->exec($request);
-			}
-		}
+		// update temma.json and manage demo mode
+		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $titledurl,
+		                                                  $allowreadonly, $disqus, $googleanalytics, $loglevel);
 		$this->redirect('/install/step4');
 	}
 	/** Step 4. */
-	public function execStep4() {
+	public function step4() {
 		// set template variables
-		$this->set('adminerror', $_GET['adminerror'] ?? null);
-		$this->set('adminname', $_GET['adminname'] ?? null);
-		$this->set('adminemail', $_GET['adminemail'] ?? null);
+		$this['adminerror'] = $_GET['adminerror'] ?? null;
+		$this['adminname'] = $_GET['adminname'] ?? null;
+		$this['adminemail'] = $_GET['adminemail'] ?? null;
 	}
 	/** Create configuration. */
-	public function execProceedStep4() {
+	public function proceedStep4() {
 		$adminname = trim($_POST['adminname'] ?? '');
 		$adminemail = trim($_POST['adminemail'] ?? '');
 		$adminpassword = trim($_POST['adminpassword'] ?? '');
@@ -233,30 +140,17 @@ class InstallController extends \Temma\Controller {
 		if (empty($adminname) || empty($adminemail) || empty($adminpassword) || strlen($adminpassword) < 6) {
 			$this->redirect('/install/step4?adminerror=1&adminname=' . urlencode($adminname) .
 			                '&adminemail=' . urlencode($adminemail));
-			return;
+			return (self::EXEC_HALT);
 		}
 		// create admin user
-		$sql = "INSERT INTO User
-			SET admin = TRUE,
-			    name = '" . $this->_db->quote($_POST['adminname']) . "',
-			    email = '" . $this->_db->quote($_POST['adminemail']) . "',
-			    password = '" . $this->_db->quote(md5($_POST['adminpassword'])) . "',
-			    creationDate = NOW(),
-			    modifDate = NOW()";
-		$this->_db->exec($sql);
+		$this->_loader->userDao->addUser($adminname, $adminemail, $adminpassword, true);
 		// update temma.json
-		$path = realpath(__DIR__ . '/../etc/temma.json');
-		$temma = json_decode(file_get_contents($path), true);
-		$temma['application']['rootController'] = 'PageController';
-		$temma['plugins'] = [
-			'_pre' => ['IdentificationController'],
-		];
-		file_put_contents($path, json_encode($temma, JSON_PRETTY_PRINT));
+		$this->_loader->installBo->updateConfigFinish();
 		// redirect
 		$this->redirect('/install/done');
 	}
 	/** "Thank you" page. */
-	public function execDone() {
+	public function done() {
 	}
 }
 

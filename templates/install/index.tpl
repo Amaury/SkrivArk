@@ -16,33 +16,20 @@
 		</ul>
 
 		<h2 style="margin-top: 40px;">Steps <small>of installation</small></h2>
-		{if !$writableTemma || !$writableLog || !$writableTmp || !$writableSplash}
+		{if $filesAccessRights !== true}
 			<p>
 				Before going further, <em>Ark</em> needs full <strong>write access</strong> to the following file(s) and directorie(s):
 			</p>
 			<ul>
-				{if !$writableTemma}
-					<li><tt>etc/temma.json</tt></li>
-				{/if}
-				{if !$writableLog}
-					<li><tt>log/</tt></li>
-				{/if}
-				{if !$writableTmp}
-					<li><tt>tmp/</tt></li>
-				{/if}
-				{if !$writableSplash}
-					<li><tt>var/splashscreen.html</tt></li>
-				{/if}
+				{foreach $filesAccessRights as $filename}
+					<li><tt>{$filename|escape}</tt></li>
+				{/foreach}
 			</ul>
 			<p class="mb-0">
 				It could be done through an administration panel, or using this command line:
 			</p>
 			<div style="padding: 0.4rem; background-color: rgba(255, 255, 255, 0.6); color: #444;"><tt>
-				chmod 777
-				{if !$writableTemma}etc/temma.json{/if}
-				{if !$writableLog}log{/if}
-				{if !$writableTmp}tmp{/if}
-				{if !$writableSplash}var/splashscreen.html{/if}
+				chmod 777{foreach $filesAccessRights as $filename} {$filename|escape}{/foreach}
 			</tt></div>
 			<p class="pt-3">
 				<a href="/install" class="btn btn-primary">Refresh this page</a>

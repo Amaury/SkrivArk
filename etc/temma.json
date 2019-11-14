@@ -6,7 +6,8 @@
 		},
 		"sessionName": "ArkSession",
 		"sessionSource": "_cache",
-		"rootController": "Install"
+		"rootController": "Install",
+		"loader": "\\Ark\\Loader"
 	},
 	"loglevels": {
 		"Temma/Base": "DEBUG",

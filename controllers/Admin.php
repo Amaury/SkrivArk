@@ -8,46 +8,43 @@
  * @package	SkrivArk
  * @subpackage	Controllers
  */
-class AdminController extends \Temma\Controller {
-	/** User DAO. */
-	private $_userDao = null;
-
+class AdminController extends \Temma\Web\Controller {
 	/** Init. */
-	public function init() {
-		$user = $this->get('user');
-		if ($user['admin'] != 1) {
+	public function __wakeup() {
+		$isAdmin = $this['user']['admin'] ?? false;
+		if (!$isAdmin) {
 			$this->httpError(410);
 			return (self::EXEC_HALT);
 		}
-		$this->_userDao = $this->loadDao('UserDao');
 	}
 	/** Main page. */
 	public function execIndex() {
 		// get users
-		$users = $this->_userDao->search(null, 'name');
-		$this->set('users', $users);
+		$this['users'] = $this->_loader->userDao->getUsers();
 		// read configuration file
-		if (is_writable(__DIR__ . '/../etc/temma.json')) {
-			$this->set('editableConfig', true);
-			$json = json_decode(file_get_contents(__DIR__ . '/../etc/temma.json'), true);
-			$this->set('dbDSN', $json['application']['dataSources']['_db']);
-			$this->set('cacheDSN', $json['application']['dataSources']['_cache']);
-			$this->set('logLevel', $json['loglevels']['finebase']);
+		$appPath = $this->_loader->config->appPath;
+		if (is_writable("$appPath/etc/temma.json")) {
+			$this['editableConfig'] = true;
+			$json = json_decode(file_get_contents("$appPath/etc/temma.json"), true);
+			$this['dbDSN'] = $json['application']['dataSources']['_db'];
+			$this['cacheDSN'] = $json['application']['dataSources']['_cache'];
+			$this['logLevel'] = $json['loglevels']['Temma/Base'];
 		}
 		// read splashscreen
-		if (is_writable(__DIR__ . '/../var/splashscreen.html')) {
-			$this->set('editableSplashscreen', true);
-			$this->set('splashscreen', file_get_contents(__DIR__ . '/../var/splashscreen.html'));
+		if (is_writable("$appPath/var/splashscreen.html")) {
+			$this['editableSplashscreen'] = true;
+			$this['splashscreen'] = file_get_contents("$appPath/var/splashscreen.html");
 		}
 	}
 	/** Check if an HTML content is valid. */
 	public function execCheckHtml() {
 		$this->view('\Temma\Views\JsonView');
-		$this->set('json', TextUtil::isValidHtmlSyntax($_POST['html']));
+		$this['json'] = \Temma\Utils\Text::isValidHtmlSyntax($_POST['html']);
 	}
 	/** Save a new splashscreen. */
 	public function execSplash() {
-		file_put_contents(__DIR__ . '/../var/splashscreen.html', $_POST['html']);
+		$appPath = $this->_loader->config->appPath;
+		file_put_contents("$appPath/var/splashscreen.html", $_POST['html']);
 		$this->redirect('/admin');
 	}
 	/** Store new configuration. */
@@ -64,7 +61,7 @@ class AdminController extends \Temma\Controller {
 		$loglevel = $_POST['loglevel'];
 		if ($loglevel == 'DEBUG' || $loglevel == 'NOTE' || $loglevel == 'INFO' || $loglevel == 'WARN' || $loglevel == 'ERROR')
 			$config['loglevels']['finebase'] = $config['loglevels']['temma'] = $config['loglevels']['skriv'] = $loglevel;
-		$json = TextUtil::JsonEncode($config);
+		$json = json_encode($config, JSON_PRETTY_PRINT);
 		file_put_contents(__DIR__ . '/../etc/temma.json', $json);
 		$this->redirect('/admin');
 	}
@@ -77,7 +74,7 @@ class AdminController extends \Temma\Controller {
 		$generate = ($_POST['generate'] == '1') ? true : false;
 		$this->redirect('/admin');
 		// data verification
-		$conf = $this->get('conf');
+		$conf = $this['conf'];
 		if (empty($name) || filter_var($email, FILTER_VALIDATE_EMAIL) === false || (!$generate && empty($password)) || (isset($conf['demoMode']) && $conf['demoMode']))
 			return (self::EXEC_HALT);
 		// creation
@@ -95,8 +92,8 @@ class AdminController extends \Temma\Controller {
 		if (!$generate)
 			return;
 		// send an email
-		$currentUser = $this->get('user');
-		$conf = $this->get('conf');
+		$currentUser = $this['user'];
+		$conf = $this['conf'];
 		$headers = "MIME-Version: 1.0\r\n" .
 			   "Content-type: text/html; charset=utf8\r\n" .
 			   "From: " . $conf['emailSender'];
@@ -125,15 +122,15 @@ class AdminController extends \Temma\Controller {
 	 */
 	public function execSetAdmin($userId, $admin) {
 		$this->view('\Temma\Views\JsonView');
-		$user = $this->get('user');
-		$conf = $this->get('conf');
+		$user = $this['user'];
+		$conf = $this['conf'];
 		if ($user['id'] == $userId || (isset($conf['demoMode']) && $conf['demoMode'])) {
-			$this->set('json', 0);
+			$this['json'] = 0;
 			return (self::EXEC_HALT);
 		}
 		$admin = ($admin == 1) ? 1 : 0;
 		$this->_userDao->update($userId, array('admin' => $admin));
-		$this->set('json', 1);
+		$this['json'] = 1;
 	}
 	/**
 	 * Remove a user.
@@ -141,14 +138,14 @@ class AdminController extends \Temma\Controller {
 	 */
 	public function execRemoveUser($userId) {
 		$this->view('\Temma\Views\JsonView');
-		$user = $this->get('user');
-		$conf = $this->get('conf');
+		$user = $this['user'];
+		$conf = $this['conf'];
 		if ($user['id'] == $userId || (isset($conf['demoMode']) && $conf['demoMode'])) {
-			$this->set('json', 0);
+			$this['json'] = 0;
 			return (self::EXEC_HALT);
 		}
 		$this->_userDao->remove($userId);
-		$this->set('json', 1);
+		$this['json'] = 1;
 	}
 	private function _exportZip($zip, $id, $path='') {
 		$sql = "SELECT *
@@ -171,7 +168,7 @@ class AdminController extends \Temma\Controller {
 				$this->httpError(500);
 				return (self::EXEC_HALT);
 			}
-			$conf = $this->get('conf');
+			$conf = $this['conf'];
 			$sitename = (isset($conf['sitename']) && !empty($conf['sitename'])) ? $conf['sitename'] : 'SkrivArk';
 			$this->_exportZip($zip, 0, "$sitename/");
 			$zip->close();
@@ -211,12 +208,13 @@ class AdminController extends \Temma\Controller {
 				$nbrPages = count($pages);
 				if (!$nbrPages)
 					break;
-				print("INSERT INTO Page (id, title, html, creationDate, modifDate, creatorId, priority, parentPageId, currentVersionId) VALUES\n");
+				print("INSERT INTO Page (id, title, html, toc, creationDate, modifDate, creatorId, priority, parentPageId, currentVersionId) VALUES\n");
 				for ($j = 0; $j < $nbrPages; $j++) {
 					$page = $pages[$j];
 					print("('" . $this->_db->quote($page['id']) . "', " .
 					      "'" . $this->_db->quote($page['title']) . "', " .
 					      "'" . $this->_db->quote($page['html']) . "', " .
+					      "'" . $this->_db->quote($page['toc']) . "', " .
 					      "'" . $this->_db->quote($page['creationDate']) . "', " .
 					      "'" . $this->_db->quote($page['modifDate']) . "', " .
 					      "'" . $this->_db->quote($page['creatorId']) . "', " .
