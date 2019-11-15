@@ -101,6 +101,7 @@ class Install extends \Temma\Web\Controller {
 	}
 	/** Store step 3 data. */
 	public function proceedStep3() {
+		TµLog::log('ark', 'DEBUG', "Install::proceedStep3()");
 		$sitename = trim($_POST['sitename'] ?? null);
 		$baseurl = trim($_POST['baseurl'] ?? null);
 		$emailsender = trim($_POST['emailsender'] ?? null);

@@ -22,14 +22,14 @@
 							</li>
 						{/if}
 						<li class="nav-item">
-							<a class="nav-link" href="/identification/account"><span class="d-sm-inline">My account</span></a>
+							<a class="nav-link" href="/authentication/account"><span class="d-sm-inline">My account</span></a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="/identification/logout"><span class="d-sm-inline">Logout</span></a>
+							<a class="nav-link" href="/authentication/logout"><span class="d-sm-inline">Logout</span></a>
 						</li>
 					{else}
 						<li class="nav-item">
-							<a class="nav-link" href="/identification/login"><span class="d-sm-inline">Login</span></a>
+							<a class="nav-link" href="/authentication/login"><span class="d-sm-inline">Login</span></a>
 						</li>
 					{/if}
 				</ul>

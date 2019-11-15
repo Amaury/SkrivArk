@@ -1,5 +1,7 @@
 <?php
 
+namespace Ark;
+
 /**
  * DAO for pages management.
  *
@@ -8,21 +10,37 @@
  * @package	SkrivArk
  * @subpackage	Lib
  */
-class PageDao extends \Temma\Dao {
-	/** Disable cache. */
-	protected $_disableCache = true;
-	/** Table Definition. */
-	protected $_tableName = 'Page';
+class PageDao {
+	/** Database object. */
+	private $_db = null;
+
+	/**
+	 * Constructor.
+	 * @param	\Temma\Base\Database	$db	Database connection object.
+	 */
+	public function __construct(\Temma\Base\Database $db) {
+		$this->_db = $db;
+	}
 
 	/* ****************** READ **************** */
+	/**
+	 * Return the number of pages.
+	 * @return	int	The number of pages.
+	 */
+	public function nbrPages() : int {
+		$sql = "SELECT COUNT(*) AS n
+			FROM Page";
+		$n = $this->_db->queryOne($sql);
+		return ($n['n']);
+	}
 	/**
 	 * Returns a page.
 	 * @param	int	$id		Page's identifier.
 	 * @param	int	$versionId	(optional) Identifier of the version to fetch.
 	 * @param	int	$userId		(optional) If given, fetch the user's subscription on the page.
-	 * @return	array	Hash.
+	 * @return	array	Associative array.
 	 */
-	public function get($id, $versionId=null, $userId=0) {
+	public function get(int $id, ?int $versionId=null, int $userId=0) : array {
 		$sql = "SELECT	Page.*,
 				PageVersion.skriv,
 				(SELECT COUNT(*) FROM PageVersion WHERE pageId = Page.id) AS nbrVersions,
@@ -36,25 +54,59 @@ class PageDao extends \Temma\Dao {
 				INNER JOIN PageVersion ON (PageVersion.pageId = Page.id)
 				INNER JOIN User modifier ON (modifier.id = PageVersion.creatorId) ";
 		if ($userId)
-			$sql .= "LEFT OUTER JOIN Subscription ON (Subscription.pageId = Page.id AND Subscription.userId = '" . $this->_db->quote($userId) . "') ";
-		$sql .= "WHERE Page.id = '" . $this->_db->quote($id) . "' ";
+			$sql .= "LEFT OUTER JOIN Subscription ON (Subscription.pageId = Page.id AND Subscription.userId = " . $this->_db->quote($userId) . ") ";
+		$sql .= "WHERE Page.id = " . $this->_db->quote($id) . " ";
 		if (isset($versionId))
-			$sql .= "AND PageVersion.id = '" . $this->_db->quote($versionId) . "' ";
+			$sql .= "AND PageVersion.id = " . $this->_db->quote($versionId) . " ";
 		else
 			$sql .= "AND PageVersion.id = Page.currentVersionId ";
 		$page = $this->_db->queryOne($sql);
-		if ($page)
-			$page['toc'] = !empty($page['toc']) ? json_decode($page['toc'], true) : '';
+		if ($page && !empty($page['toc']))
+			$page['toc'] = json_decode($page['toc'], true);
 		return ($page);
+	}
+	/**
+	 * Returns all pages, paginated and ordered by ID.
+	 * @param	int	$pageOffset	(optional) Number of the page, starting at zero. 0 by default.
+	 * @param	int	$nbrPerPage	(optional) Number of pages by pagination. 50 by default.
+	 * @return	array	List of associative arrays.
+	 */
+	public function getPages(int $pageOffset=0, int $nbrPerPage=50) : array {
+		$offset = $pageOffset * $nbrPerPage;
+		$sql = "SELECT *
+			FROM Page
+			ORDER BY id
+			LIMIT $offset, $nbrPerPage";
+		$pages = $this->_db->queryAll($sql);
+		return ($pages);
+	}
+	/**
+	 * Returns all page versions, paginated and ordered by ID.
+	 * @param	int	$pageOffset	(optional) Number of the page, starting at zero. 0 by default.
+	 * @param	int	$nbrPerPage	(optional) Number of versions by pagination. 50 by default.
+	 * @return	array	List of associative arrays.
+	 */
+	public function getPageVersions(int $pageOffset=0, int $nbrPerPage=50) : array {
+		$offset = $pageOffset * $nbrPerPage;
+		$sql = "SELECT *
+			FROM PageVersion
+			ORDER BY id
+			LIMIT $offset, $nbrPerPage";
+		$versions = $this->_db->queryAll($sql);
+		return ($versions);
 	}
 	/**
 	 * Returns sub-pages of a given page.
 	 * @param	int	$id	(optional) Parent page identifier.
-	 * @return	array	List of hashes.
+	 * @return	array	List of associative arrays.
 	 */
-	public function getSubPages($id=0) {
-		$criteria = $this->criteria()->equal('parentPageId', $id);
-		$pages = $this->search($criteria, 'priority', null, null);
+	public function getSubPages(int $id=0) : array {
+		\Temma\Base\Log::log('ark', 'WARN', "\n\nGET SUB PAGES id='$id'");
+		$sql = "SELECT *
+			FROM Page
+			WHERE parentPageId = " . $this->_db->quote($id) . "
+			ORDER BY `priority`";
+		$pages = $this->_db->queryAll($sql);
 		$pageIds = [];
 		$pagesList = [];
 		foreach ($pages as $page) {
@@ -62,7 +114,7 @@ class PageDao extends \Temma\Dao {
 			$pagesList[$page['id']] = $page;
 			$pagesIds[] = $page['id'];
 		}
-		if (count($pagesIds)) {
+		if ($pageIds) {
 			$sql = "SELECT	parentPageId,
 					COUNT(*) AS n
 				FROM Page
@@ -78,17 +130,17 @@ class PageDao extends \Temma\Dao {
 	/**
 	 * Returns page's breadcrumb.
 	 * @param	array	$page	Hash containing page's data.
-	 * @return	array	List of id and titles.
+	 * @return	array	List of associative arrays with id and title keys.
 	 */
-	public function getBreadcrumb($page) {
-		$breadcrumb = array();
-		$parentId = $page['parentPageId'];
+	public function getBreadcrumb(array $page) : array {
+		$breadcrumb = [];
+		$parentId = $page['parentPageId'] ?? 0;
 		while ($parentId > 0) {
 			$parent = $this->get($parentId);
-			$breadcrumb[] = array(
+			$breadcrumb[] = [
 				'id'	=> $parentId,
 				'title'	=> $parent['title']
-			);
+			];
 			$parentId = $parent['parentPageId'];
 		}
 		$breadcrumb = array_reverse($breadcrumb);
@@ -97,19 +149,19 @@ class PageDao extends \Temma\Dao {
 	/**
 	 * Get the list of versions of a page.
 	 * @param	int	$id	Page's identifier.
-	 * @return	array	List of hashes.
+	 * @return	array	List of associative arrays.
 	 */
-	public function getVersions($id) {
+	public function getVersions(int $id) : array {
 		$sql = "SELECT	PageVersion.id,
 				PageVersion.title,
 				PageVersion.creationDate,
 				User.name
 			FROM PageVersion
 				INNER JOIN User On (User.id = PageVersion.creatorId)
-			WHERE pageId = '" . $this->_db->quote($id) . "'
+			WHERE pageId = " . $this->_db->quote($id) . "
 			ORDER BY id DESC";
 		$data = $this->_db->queryAll($sql);
-		$versions = array();
+		$versions = [];
 		foreach ($data as $line)
 			$versions[$line['id']] = $line;
 		return ($versions);
@@ -120,13 +172,13 @@ class PageDao extends \Temma\Dao {
 	 * @param	int|array	$exclude	(optional) Identifier (or a list of identifiers) to exclude.
 	 * @return	array	List of users.
 	 */
-	public function getSubscribers($id, $exclude=null) {
+	public function getSubscribers(int $id, /* int|array */ $exclude=null) : array {
 		if (!is_array($exclude))
-			$exclude = array($exclude);
+			$exclude = [$exclude];
 		$sql = "SELECT User.*
 			FROM Subscription
 				INNER JOIN User ON (Subscription.userId = User.id)
-			WHERE Subscription.pageId = '" . $this->_db->quote($id) . "' ";
+			WHERE Subscription.pageId = " . $this->_db->quote($id) . " ";
 		if ($exclude)
 			$sql .= "AND Subscription.userId NOT IN ('" . implode(', ', $exclude) . "')";
 		$result = $this->_db->queryAll($sql);
@@ -144,22 +196,22 @@ class PageDao extends \Temma\Dao {
 	 * @param	array	$toc		Table Of Contents.
 	 * @return	int	Page's identifier.
 	 */
-	public function add($parentId, $creatorId, $title, $skriv, $html, $toc) {
+	public function add(int $parentId, int $creatorId, string $title, string $skriv, string $html, array $toc) : int {
 		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
-			SET title = '" . $this->_db->quote($title) . "',
-			    skriv = '" . $this->_db->quote($skriv) . "',
+			SET title = " . $this->_db->quote($title) . ",
+			    skriv = " . $this->_db->quote($skriv) . ",
 			    creationDate = NOW(),
-			    creatorId = '" . $this->_db->quote($creatorId) . "'";
+			    creatorId = " . $this->_db->quote($creatorId);
 		$this->_db->exec($sql);
 		$versionId = $this->_db->lastInsertId();
 		// get priority
 		$sql = "SELECT MAX(`priority`) AS prio
 			FROM Page
-			WHERE parentPageId = '" . $this->_db->quote($parentId) . "'";
+			WHERE parentPageId = " . $this->_db->quote($parentId);
 		$prio = $this->_db->queryOne($sql);
 		// add entry in Page
-		$id = $this->create(array(
+		$id = $this->create([
 			'title'			=> $title,
 			'html'			=> $html,
 			'toc'			=> json_encode($toc),
@@ -168,7 +220,7 @@ class PageDao extends \Temma\Dao {
 			'priority'		=> ($prio['prio'] + 1),
 			'parentPageId'		=> $parentId,
 			'currentVersionId'	=> $versionId
-		));
+		]);
 		// update PageVersion
 		$sql = "UPDATE PageVersion
 			SET pageId = '$id'
@@ -187,33 +239,33 @@ class PageDao extends \Temma\Dao {
 	 * @param	string	$html	HTML text.
 	 * @param	array	$toc	Table Of Content.
 	 */
-	public function addVersion($id, $userId, $title, $skriv, $html, $toc) {
+	public function addVersion(int $id, int $userId, string $title, string $skriv, string $html, ?array $toc) /* : void */ {
 		$sql = "INSERT INTO PageVersion
-			SET title = '" . $this->_db->quote($title) . "',
-			    skriv = '" . $this->_db->quote($skriv) . "',
+			SET title = " . $this->_db->quote($title) . ",
+			    skriv = " . $this->_db->quote($skriv) . ",
 			    creationDate = NOW(),
-			    creatorId = '" . $this->_db->quote($userId) . "',
-			    pageId = '" . $this->_db->quote($id) . "'";
+			    creatorId = " . $this->_db->quote($userId) . ",
+			    pageId = " . $this->_db->quote($id);
 		$this->_db->exec($sql);
 		$versionId = $this->_db->lastInsertId();
-		$this->update($id, array(
-			'title'			=> $title,
-			'html'			=> $html,
-			'toc'			=> json_encode($toc),
-			'modifDate'		=> substr(date('c'), 0, 19),
-			'currentVersionId'	=> $versionId
-		));
+		$sql = "UPDATE Page
+			SET title = " . $this->_db->quote($title) . ",
+			    html = " . $this->_db->quote($html) . ",
+			    toc = " . $this->_db->quote($toc) . ",
+			    modifDate = NOW(),
+			    currentVersionId = '$versionId'";
+		$this->_db->exec($sql);
 	}
 	/**
 	 * Remove a page.
 	 * @param	int	$id	Page's identifier.
 	 */
-	public function remove($id) {
+	public function remove(int $id) /* : void */ {
 		$sql = "DELETE FROM PageVersion
-			WHERE pageId = '" . $this->_db->quote($id) . "'";
+			WHERE pageId = " . $this->_db->quote($id);
 		$this->_db->exec($sql);
 		$sql = "DELETE FROM Page
-			WHERE id = '" . $this->_db->quote($id) . "'";
+			WHERE id = " . $this->_db->quote($id);
 		$this->_db->exec($sql);
 	}
 	/**
@@ -221,9 +273,9 @@ class PageDao extends \Temma\Dao {
 	 * @param	int	$parentPageId	Parent page's identifier.
 	 * @param	array	$idList		Sub-pages' identifiers.
 	 */
-	public function setPriorities($parentPageId, $idList) {
+	public function setPriorities(int $parentPageId, array $idList) /* : void */ {
 		// reset
-		$this->update($this->criteria()->equal('parentPageId', $parentPageId), array('priority' => 0));
+		$this->update($this->criteria()->equal('parentPageId', $parentPageId), ['priority' => 0]);
 		// new priorities
 		$matches = null;
 		$prio = 0;
@@ -232,8 +284,8 @@ class PageDao extends \Temma\Dao {
 				continue;
 			$sql = "UPDATE Page
 				SET priority = $prio
-				WHERE parentPageId = '" . $this->_db->quote($parentPageId) . "'
-				  AND id = '" . $this->_db->quote($matches[1]) . "'";
+				WHERE parentPageId = " . $this->_db->quote($parentPageId) . "
+				  AND id = " . $this->_db->quote($matches[1]);
 			$this->_db->exec($sql);
 			$prio++;
 		}
@@ -243,17 +295,17 @@ class PageDao extends \Temma\Dao {
 	 * @param	int	$pageId		Page identifier.
 	 * @param	int	$destinationId	Destination page identifier.
 	 */
-	public function move($pageId, $destinationId) {
+	public function move(int $pageId, int $destinationId) /* : void */ {
 		$destinationId = $this->_db->quote($destinationId);
 		$sql = "SELECT IFNULL(MAX(priority), -1) AS prio
 			FROM Page
-			WHERE parentPageId = '$destinationId'";
+			WHERE parentPageId = $destinationId";
 		$result = $this->_db->queryOne($sql);
 		$prio = $result['prio'] + 1;
 		$sql = "UPDATE Page
-			SET parentPageId = '$destinationId',
+			SET parentPageId = $destinationId,
 			    priority = $prio
-			WHERE id = '" . $this->_db->quote($pageId) . "'";
+			WHERE id = " . $this->_db->quote($pageId);
 		$this->_db->exec($sql);
 	}
 	/**
@@ -262,7 +314,7 @@ class PageDao extends \Temma\Dao {
 	 * @param	int	$pageId		Page's identifier.
 	 * @param	bool	$subscribed	Page subscription.
 	 */
-	public function subscription($userId, $pageId, $subscribed) {
+	public function subscription(int $userId, int $pageId, int $subscribed) /* : void */ {
 		if (!$subscribed)
 			$sql = "DELETE FROM Subscription
 				WHERE userId = '" . $this->_db->quote($userId) . "'

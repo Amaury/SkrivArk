@@ -12,6 +12,6 @@
 	"loglevels": {
 		"Temma/Base": "DEBUG",
 		"Temma/Web": "DEBUG",
-		"skriv": "DEBUG"
+		"ark": "DEBUG"
 	}
 }

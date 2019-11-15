@@ -247,12 +247,13 @@ class Database extends \Temma\Base\Datasource {
 	}
 	/**
 	 * Escape a character string.
-	 * @param	string	$str	The string to escape.
+	 * @param	?string	$str	The string to escape.
 	 * @return	string	The escaped string.
 	 */
-	public function quote(string $str) : string {
+	public function quote(?string $str) : string {
 		$this->_connect();
-		return ($this->_db->quote($str));
+		$str = $this->_db->quote((string)$str);
+		return (strlen($str) ? $str : '');
 	}
 	/**
 	 * Executes a SQL request without fetching data.
@@ -288,7 +289,7 @@ class Database extends \Temma\Base\Datasource {
 		}
 		$line = $result->fetch(\PDO::FETCH_ASSOC);
 		$result = null;
-		return ($line);
+		return (is_array($line) ? $line : []);
 	}
 	/**
 	 * Execute an SQL request and fetch all lines of returned data.

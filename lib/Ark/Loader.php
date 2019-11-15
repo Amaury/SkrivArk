@@ -23,6 +23,8 @@ class Loader extends \Temma\Base\Loader {
 			return (new \Ark\PageDao($this->dataSources['db']));
 		if ($key == 'installBo')
 			return (new \Ark\InstallBo($this));
+		if ($key == 'exportBo')
+			return (new \Ark\ExportBo($this));
 		return (null);
 	}
 }

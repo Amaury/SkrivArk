@@ -3,7 +3,7 @@
 
 <div class="container">
 	<h1 style="text-align: center;">{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}</h1>
-	<form method="post" action="/identification/auth" class="form-signin">
+	<form method="post" action="/authentication/auth" class="form-signin">
 		<h2 class="form-signin-heading">Sign in</h2>
 		<input id="email" type="text" name="email" placeholder="Email" value="{$emailLogin}" class="input-block-level" />
 		<input type="password" name="password" placeholder="password" class="input-block-level" />
@@ -11,9 +11,9 @@
 		{if $conf.demoMode}
 			<div class="well" style="margin-top: 2em; margin-bottom: 0;">
 				<center>
-					This is a demonstration site<br />
-					Its contents are reset every hour<br />
-					Feel free to test as you want to
+					This is a demonstration site.<br />
+					Its content is reset every hour.<br />
+					Feel free to test it as you want to.
 				</center>
 				<br />
 				<table style="margin: 0 auto;">

@@ -40,8 +40,23 @@ var adm = new function() {
 
 <main class="app-main" style="font-size: 1rem;">
 	<div class="container" style="padding-top: 2.4rem;">
+		{if $paramsError}
+			<div id="panel-error" class="card bg-danger p-3">
+				Bad parameters.
+			</div>
+		{/if}
+		{if !$editable}
+			<div class="card bg-warning p-3">
+				Demo mode: You can't modify this account.
+			</div>
+		{/if}
+		{if $updated}
+			<div class="card bg-success p-3">
+				Your account has been updated.
+			</div>
+		{/if}
 		<h2>My Account</h2>
-		<form method="post" action="/identification/updateAccount" class="form-horizontal">
+		<form method="post" action="/authentication/updateAccount" class="form-horizontal">
 			<div class="form-group">
 				<label for="edit-name">Name</label>
 				<input type="text" id="edit-name" class="form-control" name="name" placeholder="name" value="{$user.name|escape}" />
@@ -49,21 +64,21 @@ var adm = new function() {
 			<div class="form-group">
 				<label for="edit-email">Email</label>
 				<input type="text" id="edit-email" name="email" class="form-control" placeholder="email" value="{$user.email|escape}"
-				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the email address"{/if} />
+				 {if !$editable}disabled="disabled" title="[demo mode] You can't change the email address"{/if} />
 			</div>
 			<div class="form-group">
 				<label for="edit-pwd">Password</label>
 				<input type="password" id="edit-pwd" name="password" class="form-control" placeholder="password"
-				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
+				 {if !$editable}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
 			<div class="form-group">
 				<label for="edit-pwd2">Password (again)</label>
 				<input type="password" id="edit-pwd2" name="password2" class="form-control" placeholder="password"
-				 {if $conf.demoMode}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
+				 {if !$editable}disabled="disabled" title="[demo mode] You can't change the password"{/if} />
 			</div>
 			<div class="control-group">
 				<div class="controls">
-					<input type="submit" class="btn btn-primary" value="Update my account" />
+					<input type="submit" class="btn btn-primary" value="Update my account" {if !$editable}disabled{/if} />
 				</div>
 			</div>
 		</form>

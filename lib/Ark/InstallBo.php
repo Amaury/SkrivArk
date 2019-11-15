@@ -171,22 +171,25 @@ class InstallBo {
 		$this->_writeConf($temma);
 		// management of the demo mode
 		if ($demomode) {
-			// fill the database with demo data
-			$sql = file_get_contents($this->_loader->config->appPath . '/etc/demo-data.sql');
-			$sql = explode(';', $sql); 
-			foreach ($sql as $request) {
-				$request = trim($request);
-				if (!empty($request))
-					$this->_loader->config->dataSources['db']->exec($request);
+			// check is there is some pages
+			if (!$this->_loader->pageDao->nbrPages()) {
+				// fill the database with demo data
+				$sql = file_get_contents($this->_loader->config->appPath . '/etc/demo-data.sql');
+				$sql = explode(';', $sql); 
+				foreach ($sql as $request) {
+					$request = trim($request);
+					if (!empty($request))
+						$this->_loader->dataSources['db']->exec($request);
+				}
 			}
 		}
 	}
 	/**Update the 'temma.json' configuration file to finish the installation process. */
 	public function updateConfigFinish() /* : void */ {
 		$temma = $this->_readConf();
-		$temma['application']['rootController'] = 'PageController';
+		$temma['application']['rootController'] = 'Page';
 		$temma['plugins'] = [
-			'_pre' => ['IdentificationController'],
+			'_pre' => ['Authentication'],
 		];
 		$this->_writeConf($temma);
 	}

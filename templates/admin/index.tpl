@@ -197,7 +197,7 @@ var adm = new function() {
 			<select name="format" class="custom-select" style="margin-right: 0.4rem;"
 			 onchange="if (this.value == 'html' && !$('#check-zip').is(':checked')) $('#check-zip').attr('checked', 'checked');">
 				<option value="sql">SQL - full database</option>
-				<option value="html">HTML only + ZIP</option>
+				<option value="html">zipped HTML - content only</option>
 			</select>
 			<input type="submit" class="btn btn-primary" value="Download" />
 		</form>
