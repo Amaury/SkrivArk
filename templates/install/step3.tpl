@@ -54,15 +54,8 @@
 					</label>
 				</div>
 				<div class="form-check">
-					<input id="check-titledurl" class="form-check-input" type="checkbox" name="titledurl" value="1" {if $titledurl !== false}checked="checked"{/if}>
-					<label class="form-check-label" for="check-titledurl">
-						Titled URL
-						<small>The title of a page is a part of its URL</small>
-					</label>
-				</div>
-				<div class="form-check">
 					<input id="check-ro" class="form-check-input" type="checkbox" name="allowreadonly" value="1" {if $allowreadonly !== false}checked="checked"{/if}>
-					<label class="form-check-label" for="check-titledurl">
+					<label class="form-check-label" for="check-ro">
 						Allow read-only access
 						<small>Pages are readable even for non-logged visitors</small>
 					</label>

@@ -71,9 +71,9 @@
 							</li>
 						{/if}
 						{* breadcrumbs *}
-						<li class="menu-header"><a href="/"><i class="fas fa-home"></i> Home</a></li>
+						<li class="menu-header" style="text-transform: none;"><a href="/"><i class="fas fa-home"></i> Homepage</a></li>
 						{foreach $breadcrumb as $crumb}
-							<li class="menu-header" style="margin-top: 0; padding-top: 0;"><a href="/page/show/{$crumb.id}"><i class="fas {*fa-caret-right*} fa-reply fa-rotate-180"></i> {$crumb.title|escape}</a></li>
+							<li class="menu-header" style="text-transform: none; margin-top: 0; padding-top: 0;"><a href="/page/show/{$crumb.id}"><i class="fas {*fa-caret-right*} fa-reply fa-rotate-180"></i> {$crumb.title|escape}</a></li>
 						{/foreach}
 						{if !$showAsSubPage}
 							<li class="menu-header" style="text-transform: none; padding-top: 0; margin-top: 0;"><a href="$URL"><i class="fas {*fa-chevron-right*} fa-reply-all fa-rotate-180"></i> {$page.title|escape}</a></li>
@@ -84,9 +84,8 @@
 				{if $ACTION != 'version' && $subPages}
 					<ul class="menu _pages-sortable">
 						{foreach name=subPages from=$subPages item=subPage}
-							<li id="subpage-{$subPage.id}" title="{$subPage.intro|escape}"
-							 class="menu-item {if $showAsSubPage && $subPage.id == $page.id}has-active{/if}">
-								<a href="/page/show/{$subPage.id}/{$subPage.titledUrl}" class="menu-link" style="padding-right: 0;"><span class="menu-text">
+							<li id="subpage-{$subPage.id}" class="menu-item {if $showAsSubPage && $subPage.id == $page.id}has-active{/if}">
+								<a href="/page/show/{$subPage.id}/{$subPage.url}" class="menu-link" style="padding-right: 0;"><span class="menu-text">
 									{if $subPage.nbrChildren}
 										<i class="fas fa-caret-right" style="float: right; opacity: 0.5;"></i>
 									{/if}

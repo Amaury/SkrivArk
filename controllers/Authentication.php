@@ -42,7 +42,7 @@ class Authentication extends \Temma\Web\Plugin {
 		if (!isset($user['id'])) {
 			// unknown user
 			$this->_loader->session['emailLogin'] = $email;
-			$this->redirect('/identification/login');
+			$this->redirect('/authentication/login');
 			return (self::EXEC_HALT);
 		}
 		$this->_loader->session['user'] = $user;

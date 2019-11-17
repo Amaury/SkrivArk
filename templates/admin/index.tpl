@@ -140,12 +140,11 @@ var adm = new function() {
 						<label class="form-check-label" for="check-demo">Demo mode</label>
 					</div>
 					<div class="form-check">
-						<input id="check-titled" type="checkbox" name="titledurl" value="1" {if $conf.titledURL}checked="checked"{/if} />
-						<label class="form-check-label" for="check-titled">Titled URL</label>
-					</div>
-					<div class="form-check">
 						<input id="check-ro" type="checkbox" name="allowreadonly" value="1" {if $conf.allowReadOnly}checked="checked"{/if} />
-						<label class="form-check-label" for="check-ro">Allow read-only</label>
+						<label class="form-check-label" for="check-ro">
+							Allow read-only
+							<small>Pages are readable even for non-logged visitors</small>
+						</label>
 					</div>
 				</div>
 				<div class="form-group">

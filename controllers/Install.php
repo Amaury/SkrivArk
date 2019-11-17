@@ -93,7 +93,6 @@ class Install extends \Temma\Web\Controller {
 		$this['baseurl'] = $_GET['baseurl'] ?? null;
 		$this['emailsender'] = $_GET['emailsender'] ?? null;
 		$this['demomode'] = $_GET['demomode'] ?? null;
-		$this['titledurl'] = $_GET['titledurl'] ?? null;
 		$this['allowreadonly'] = $_GET['allowreadonly'] ?? null;
 		$this['disqus'] = $_GET['disqus'] ?? null;
 		$this['googleanalytics'] = $_GET['googleanalytics'] ?? null;
@@ -106,7 +105,6 @@ class Install extends \Temma\Web\Controller {
 		$baseurl = trim($_POST['baseurl'] ?? null);
 		$emailsender = trim($_POST['emailsender'] ?? null);
 		$demomode = (($_POST['demomode'] ?? 0) == 1) ? true : false;
-		$titledurl = (($_POST['titledurl'] ?? 0) == 1) ? true : false;
 		$allowreadonly = (($_POST['allowreadonly'] ?? 0) == 1) ? true : false;
 		$disqus = trim($_POST['disqus'] ?? null);
 		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
@@ -115,14 +113,14 @@ class Install extends \Temma\Web\Controller {
 		if (empty($sitename) || empty($baseurl) || empty($emailsender) || !in_array($loglevel, ['DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR'])) {
 			$this->redirect('/install/step2?paramerror=1&sitename=' . urlencode($sitename) .
 			                '&baseurl=' . urlencode($baseurl) . '&emailsender=' . urlencode($emailsender) .
-			                '&demomode=' . urlencode($demomode) . '&titledurl=' . urlencode($titledurl) .
-			                '&allowreadonly=' . urlencode($allowreadonly) . '&disqus=' . urlencode($disqus) .
-			                '&googleanalytics=' . urlencode($googleanalytics) . '&loglevel=' . urlencode($loglevel));
+			                '&demomode=' . urlencode($demomode) . '&allowreadonly=' . urlencode($allowreadonly) .
+			                '&disqus=' . urlencode($disqus) .  '&googleanalytics=' . urlencode($googleanalytics) .
+			                '&loglevel=' . urlencode($loglevel));
 			return (self::EXEC_HALT);
 		}
 		// update temma.json and manage demo mode
-		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $titledurl,
-		                                                  $allowreadonly, $disqus, $googleanalytics, $loglevel);
+		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $allowreadonly,
+		                                                  $disqus, $googleanalytics, $loglevel);
 		$this->redirect('/install/step4');
 	}
 	/** Step 4. */

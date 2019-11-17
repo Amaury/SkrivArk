@@ -58,7 +58,6 @@ class Admin extends \Temma\Web\Controller {
 		$config['autoimport']['baseURL'] = $_POST['baseurl'];
 		$config['autoimport']['emailSender'] = $_POST['emailsender'];
 		$config['autoimport']['demoMode'] = (isset($_POST['demomode']) && $_POST['demomode'] === '1') ? true : false;
-		$config['autoimport']['titledURL'] = (isset($_POST['titledurl']) && $_POST['titledurl'] === '1') ? true : false;
 		$config['autoimport']['allowReadOnly'] = (isset($_POST['allowreadonly']) && $_POST['allowreadonly'] === '1') ? true : false;
 		$config['autoimport']['disqus'] = $_POST['disqus'];
 		$config['autoimport']['googleAnalytics'] = $_POST['googleanalytics'];

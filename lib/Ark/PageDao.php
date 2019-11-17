@@ -37,10 +37,10 @@ class PageDao {
 	 * Returns a page.
 	 * @param	int	$id		Page's identifier.
 	 * @param	int	$versionId	(optional) Identifier of the version to fetch.
-	 * @param	int	$userId		(optional) If given, fetch the user's subscription on the page.
+	 * @param	?int	$userId		(optional) If given, fetch the user's subscription on the page.
 	 * @return	array	Associative array.
 	 */
-	public function get(int $id, ?int $versionId=null, int $userId=0) : array {
+	public function get(int $id, ?int $versionId=null, ?int $userId=null) : array {
 		$sql = "SELECT	Page.*,
 				PageVersion.skriv,
 				(SELECT COUNT(*) FROM PageVersion WHERE pageId = Page.id) AS nbrVersions,
@@ -101,20 +101,19 @@ class PageDao {
 	 * @return	array	List of associative arrays.
 	 */
 	public function getSubPages(int $id=0) : array {
-		\Temma\Base\Log::log('ark', 'WARN', "\n\nGET SUB PAGES id='$id'");
 		$sql = "SELECT *
 			FROM Page
 			WHERE parentPageId = " . $this->_db->quote($id) . "
 			ORDER BY `priority`";
 		$pages = $this->_db->queryAll($sql);
-		$pageIds = [];
+		$pagesIds = [];
 		$pagesList = [];
 		foreach ($pages as $page) {
 			$page['nbrChildren'] = 0;
 			$pagesList[$page['id']] = $page;
 			$pagesIds[] = $page['id'];
 		}
-		if ($pageIds) {
+		if ($pagesIds) {
 			$sql = "SELECT	parentPageId,
 					COUNT(*) AS n
 				FROM Page
@@ -167,6 +166,40 @@ class PageDao {
 		return ($versions);
 	}
 	/**
+	 * Return the diff between two versions.
+	 * @param	int	$fromId	ID of the first version to compare.
+	 * @param	int	$toId	ID of the second version to compare.
+	 * @return	array	Array with titleDiff and skrivDiff.
+	 */
+	public function compareVersions(int $fromId, int $toId) {
+		$sql = "SELECT  pageFrom.title AS fromTitle,
+				pageFrom.skriv AS fromSkriv,
+				pageTo.title AS toTitle,
+				pageTo.skriv AS toSkriv
+			FROM PageVersion pageFrom
+				INNER JOIN PageVersion pageTo ON (pageFrom.pageId = pageTo.pageId)
+			WHERE pageFrom.id = " . $this->_db->quote($fromId) . "
+			  AND pageTo.id = " . $this->_db->quote($toId);
+		$versions = $this->_db->queryOne($sql);
+		require_once('finediff.php');
+		$result = [];
+		// compare titles
+		$fromTitle = mb_convert_encoding($versions['toTitle'], 'HTML-ENTITIES', 'UTF-8');
+		$toTitle = mb_convert_encoding($versions['fromTitle'], 'HTML-ENTITIES', 'UTF-8');
+		$finediff = new \FineDiff($fromTitle, $toTitle, \FineDiff::$wordGranularity);
+		$diffResult = $finediff->renderDiffToHTML();
+		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
+		$result[] = $diffResult;
+		// compare texts
+		$fromText = mb_convert_encoding($versions['toSkriv'], 'HTML-ENTITIES', 'UTF-8');
+		$toText = mb_convert_encoding($versions['fromSkriv'], 'HTML-ENTITIES', 'UTF-8');
+		$finediff = new \FineDiff($fromText, $toText, \FineDiff::$wordGranularity);
+		$diffResult = $finediff->renderDiffToHTML();
+		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
+		$result[] = $diffResult;
+		return ($result);
+	}
+	/**
 	 * Returns the list of a page's subscribers.
 	 * @param	int		$id		Page's identifier.
 	 * @param	int|array	$exclude	(optional) Identifier (or a list of identifiers) to exclude.
@@ -193,10 +226,10 @@ class PageDao {
 	 * @param	string	$title		Page's title.
 	 * @param	string	$skriv		SkrivML text.
 	 * @param	string	$html		HTML text.
-	 * @param	array	$toc		Table Of Contents.
+	 * @param	?array	$toc		Table Of Contents.
 	 * @return	int	Page's identifier.
 	 */
-	public function add(int $parentId, int $creatorId, string $title, string $skriv, string $html, array $toc) : int {
+	public function add(int $parentId, int $creatorId, string $title, string $skriv, string $html, ?array $toc) : int {
 		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
 			SET title = " . $this->_db->quote($title) . ",
@@ -211,16 +244,18 @@ class PageDao {
 			WHERE parentPageId = " . $this->_db->quote($parentId);
 		$prio = $this->_db->queryOne($sql);
 		// add entry in Page
-		$id = $this->create([
-			'title'			=> $title,
-			'html'			=> $html,
-			'toc'			=> json_encode($toc),
-			'creatorId'		=> $creatorId,
-			'creationDate'		=> substr(date('c'), 0, 19),
-			'priority'		=> ($prio['prio'] + 1),
-			'parentPageId'		=> $parentId,
-			'currentVersionId'	=> $versionId
-		]);
+		$sql = "INSERT INTO Page
+			SET title = " . $this->_db->quote($title) . ",
+			    html = " . $this->_db->quote($html) . ",
+			    toc = " . $this->_db->quote(json_encode($toc)) . ",
+			    creatorId = " . $this->_db->quote($creatorId) . ",
+			    creationDate = NOW(),
+			    modifDate = NOW(),
+			    priority = " . ($prio['prio'] + 1) . ",
+			    parentPageId = " . $this->_db->quote($parentId) . ",
+			    currentVersionId = " . $this->_db->quote($versionId);
+		$this->_db->exec($sql);
+		$id = $this->_db->lastInsertId();
 		// update PageVersion
 		$sql = "UPDATE PageVersion
 			SET pageId = '$id'
@@ -251,9 +286,10 @@ class PageDao {
 		$sql = "UPDATE Page
 			SET title = " . $this->_db->quote($title) . ",
 			    html = " . $this->_db->quote($html) . ",
-			    toc = " . $this->_db->quote($toc) . ",
+			    toc = " . $this->_db->quote(json_encode($toc)) . ",
 			    modifDate = NOW(),
-			    currentVersionId = '$versionId'";
+			    currentVersionId = '$versionId'
+			WHERE id = " . $this->_db->quote($id);
 		$this->_db->exec($sql);
 	}
 	/**
@@ -275,7 +311,10 @@ class PageDao {
 	 */
 	public function setPriorities(int $parentPageId, array $idList) /* : void */ {
 		// reset
-		$this->update($this->criteria()->equal('parentPageId', $parentPageId), ['priority' => 0]);
+		$sql = "UPDATE Page
+			SET `priority` = 0
+			WHERE parentPageId = " . $this->_db->quote($parentPageId);
+		$this->_db->exec($sql);
 		// new priorities
 		$matches = null;
 		$prio = 0;
@@ -317,12 +356,12 @@ class PageDao {
 	public function subscription(int $userId, int $pageId, int $subscribed) /* : void */ {
 		if (!$subscribed)
 			$sql = "DELETE FROM Subscription
-				WHERE userId = '" . $this->_db->quote($userId) . "'
-				  AND pageId = '" . $this->_db->quote($pageId) . "'";
+				WHERE userId = " . $this->_db->quote($userId) . "
+				  AND pageId = " . $this->_db->quote($pageId);
 		else
 			$sql = "INSERT INTO Subscription
-				SET userId = '" . $this->_db->quote($userId) . "',
-				    pageId = '" . $this->_db->quote($pageId) . "',
+				SET userId = " . $this->_db->quote($userId). ",
+				    pageId = " . $this->_db->quote($pageId) . ",
 				    createDate = NOW()
 				ON DUPLICATE KEY UPDATE id = id";
 		$this->_db->exec($sql);

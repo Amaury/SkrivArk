@@ -25,9 +25,9 @@ class Page extends \Temma\Web\Controller {
 	/**
 	 * Displays a page.
 	 * @param	int	$id	Page's identifier.
-	 * @param	string	$title	(optional) Page's title.
+	 * @param	string	$title	(optinal) Page's title. Optional only when the $id parameter is set to zero.
 	 */
-	public function show($id=0, $title=null) {
+	public function show(int $id=0, string $title=null) {
 		TµLog::log('ark', 'DEBUG', "Show action.");
 		// check root page
 		if ($this['CONTROLLER'] == 'page' && (!$id || !is_numeric($id))) {
@@ -37,12 +37,12 @@ class Page extends \Temma\Web\Controller {
 		// get page's data
 		$userId = $this['user']['id'] ?? 0;
 		$page = $this->_loader->pageDao->get($id, null, $userId);
-		if ($id != 0 && $this['conf']['titledURL'] === true) {
+		if ($id != 0) {
 			// check page's title
-			$pageTitle = TextUtil::titleToUrl($page['title']);
+			$pageTitle = \Temma\Utils\Text::urlize($page['title']);
 			if ($pageTitle != $title) {
 				$this->redirect("/page/show/$id/$pageTitle");
-				return;
+				return (self::EXEC_HALT);
 			}
 		}
 		// get breadcrumb
@@ -56,11 +56,7 @@ class Page extends \Temma\Web\Controller {
 		else
 			$subPages = $this->_loader->pageDao->getSubPages($id);
 		foreach ($subPages as &$subPage) {
-			$intro = substr(strip_tags($subPage['html']), 0, 120);
-			$intro .= (strlen($intro) >= 120) ? ' (...)' : '';
-			$subPage['intro'] = $intro;
-			if (isset($conf['titledURL']) && $conf['titledURL'] === true)
-				$subPage['titledUrl'] = TextUtil::titleToUrl($subPage['title']);
+			$subPage['url'] = \Temma\Utils\Text::urlize($subPage['title']);
 		}
 		$this['page'] = $page;
 		$this['subPages'] = $subPages;
@@ -74,7 +70,7 @@ class Page extends \Temma\Web\Controller {
 	 * @param	int	$pageId		Current page idnetifier.
 	 * @param	int	$parentId	Parent level identifier.
 	 */
-	public function getSubLevels($pageId, $parentLevelId=0) {
+	public function getSubLevels(int $pageId, int $parentLevelId=0) {
 		TµLog::log('ark', 'INFO', "GetSubLevels action.");
 		$this['page'] = ['id' => $pageId];
 		$this['parentSubLevelId'] = $parentLevelId;
@@ -86,7 +82,7 @@ class Page extends \Temma\Web\Controller {
 	 * @param	int	$id		Page identifier.
 	 * @param	int	$destinationId	Destination page identifier.
 	 */
-	public function move($id, $destinationId) {
+	public function move(int $id, int $destinationId) {
 		if (isset($this['user']))
 			$this->_loader->pageDao->move($id, $destinationId);
 		$this->redirect("/page/show/$id");
@@ -96,7 +92,7 @@ class Page extends \Temma\Web\Controller {
 	 * @param	int	$id		Identifier of the page to modify.
 	 * @param	int	$versionId	(optional) Identifier of the version to edit.
 	 */
-	public function edit($id, $versionId=null) {
+	public function edit(int $id, int $versionId=null) {
 		TµLog::log('ark', 'DEBUG', "Edit action ($id).");
 		// check user
 		if (!isset($this['user'])) {
@@ -105,17 +101,17 @@ class Page extends \Temma\Web\Controller {
 		}
 		// get page's data
 		$page = $this->_loader->pageDao->get($id, $versionId);
-		$breadcrumb = $this->_loader->pageDao->getBreadcrumb($page);
-		$this['editContent'] = $this->_loader->session->get('editContent');
-		$this->_loader->session->set('editContent', null);
+		[$html, $toc] = $this->_render($page['skriv']);
+		$page['html'] = $html;
 		$this['page'] = $page;
-		$this['breadcrumb'] = $breadcrumb;
+		$this['editContent'] = $this->_loader->session['editContent'];
+		unset($this->_loader->session['editContent']);
 	}
 	/**
 	 * Update a page.
 	 * @param	int	$id	Page's identifier.
 	 */
-	public function storeEdit($id) {
+	public function storeEdit(int $id) {
 		TµLog::log('ark', 'DEBUG', "StoreEdit($id) action.");
 		// check user
 		if (!isset($this['user'])) {
@@ -163,7 +159,7 @@ class Page extends \Temma\Web\Controller {
 	 * Show the creation form.
 	 * @param	int	$parentId	Identifier of the parent page.
 	 */
-	public function create($parentId) {
+	public function create(int $parentId) {
 		// check user
 		if (!isset($this['user'])) {
 			$this->redirect("/page/show/$id");
@@ -175,8 +171,8 @@ class Page extends \Temma\Web\Controller {
 		$breadcrumb = is_array($breadcrumb) ? $breadcrumb : [];
 		if (isset($parentPage))
 			$breadcrumb[] = $parentPage;
-		$this['editContent'] = $this->_session->get('editContent');
-		$this->_session->set('editContent', null);
+		$this['editContent'] = $this->_loader->session->get('editContent');
+		$this->_loader->session->set('editContent', null);
 		$this['page'] = $page;
 		$this['breadcrumb'] = $breadcrumb;
 		$this['parentId'] = $parentId;
@@ -186,7 +182,7 @@ class Page extends \Temma\Web\Controller {
 	 * Store a new page.
 	 * @param	int	$parentId	Identifier of the parent page.
 	 */
-	public function storeCreate($parentId) {
+	public function storeCreate(int $parentId) {
 		TµLog::log('ark', 'DEBUG', "StoreEdit($parentId) action.");
 		// check user
 		if (!isset($this['user'])) {
@@ -196,7 +192,7 @@ class Page extends \Temma\Web\Controller {
 		$title = trim($_POST['title']);
 		// get data
 		if (empty($title)) {
-			$this->_session->set('editContent', $_POST['content']);
+			$this->_loader->session->set('editContent', $_POST['content']);
 			$this->redirect("/page/create/$id");
 			return (self::EXEC_HALT);
 		}
@@ -234,7 +230,6 @@ class Page extends \Temma\Web\Controller {
 	}
 	/** Convert a SkrivML text into HTML (used in edit page). */
 	public function convert() {
-		TµLog::log('ark', 'INFO', "Convert action.");
 		[$html, $toc] = $this->_render($_POST['text']);
 		print($html);
 		return (self::EXEC_QUIT);
@@ -243,7 +238,7 @@ class Page extends \Temma\Web\Controller {
 	 * Remove a page.
 	 * @param	int	$id	Page's identifier.
 	 */
-	public function remove($id) {
+	public function remove(int $id) {
 		// check user
 		if (!isset($this['user'])) {
 			$this->redirect("/page/show/$id");
@@ -289,7 +284,7 @@ class Page extends \Temma\Web\Controller {
 	 * Define subpages' priorities.
 	 * @param	int	$id	Page's identifier.
 	 */
-	public function setPriorities($id) {
+	public function setPriorities(int $id) {
 		$this->view('\Temma\Views\JsonView');
 		// check user
 		if (!isset($this['user'])) {
@@ -305,7 +300,7 @@ class Page extends \Temma\Web\Controller {
 	 * @param	int	$pageId		Page's identifier.
 	 * @param	int	$subscribed	1 if the user subscribed to the page.
 	 */
-	public function subscription($pageId, $subscribed) {
+	public function subscription(int $pageId, int $subscribed) {
 		// check user
 		if (!isset($this['user'])) {
 			return (self::EXEC_QUIT);
@@ -320,15 +315,13 @@ class Page extends \Temma\Web\Controller {
 	/**
 	 * Shows the list of versions of a page.
 	 * @param	int	$id		Page's identifier.
-	 * @param	int	$versionFrom	(optional) Identifier of the first version to compare.
-	 * @param	int	$versionTo	(optional) Identifier of the second version to compare.
+	 * @param	?int	$versionFrom	(optional) Identifier of the first version to compare.
+	 * @param	?int	$versionTo	(optional) Identifier of the second version to compare.
 	 */
-	public function versions($id, $versionFrom=null, $versionTo=null) {
+	public function versions(int $id, ?int $versionFrom=null, ?int $versionTo=null) {
 		TµLog::log('ark', 'DEBUG', "Versions action.");
 		if ((isset($versionFrom) && !isset($versionTo)) ||
-		    (!isset($versionFrom) && isset($versionTo)) ||
-		    (isset($versionFrom) && !is_numeric($versionTo)) ||
-		    (isset($versionTo) && !is_numeric($versionTo))) {
+		    (!isset($versionFrom) && isset($versionTo))) {
 			$this->redirect("/page/versions/$id");
 			return (self::EXEC_HALT);
 		}
@@ -337,9 +330,10 @@ class Page extends \Temma\Web\Controller {
 			return (self::EXEC_HALT);
 		}
 		// fetch data, from the 'show' action
-		$res = $this->show($id);
-		if ($res != self::EXEC_FORWARD)
-			return ($res);
+		$page = $this->_loader->pageDao->get($id);
+		if (!$page)
+			throw new \Temma\Exceptions\HttpException("No page with ID '$id'.", 404);
+		$this['page'] = $page;
 		// get the list of versions
 		$versions = $this->_loader->pageDao->getVersions($id);
 		$this['versions'] = $versions;
@@ -365,30 +359,9 @@ class Page extends \Temma\Web\Controller {
 		$this['versionFrom'] = $versionFrom;
 		$this['versionTo'] = $versionTo;
 		// get versions for diff
-		$sql = "SELECT	pageFrom.title AS fromTitle,
-				pageFrom.skriv AS fromSkriv,
-				pageTo.title AS toTitle,
-				pageTo.skriv AS toSkriv
-			FROM PageVersion pageFrom
-				INNER JOIN PageVersion pageTo ON (pageFrom.pageId = pageTo.pageId)
-			WHERE pageFrom.id = '" . $this->_db->quote($versionFrom) . "'
-			  AND pageTo.id = '" . $this->_db->quote($versionTo) . "'";
-		$versions = $this->_db->queryOne($sql);
-		require_once('finediff.php');
-		// compare titles
-		$fromTitle = mb_convert_encoding($versions['toTitle'], 'HTML-ENTITIES', 'UTF-8');
-		$toTitle = mb_convert_encoding($versions['fromTitle'], 'HTML-ENTITIES', 'UTF-8');
-		$finediff = new FineDiff($fromTitle, $toTitle, FineDiff::$wordGranularity);
-		$diffResult = $finediff->renderDiffToHTML();
-		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
-		$this['titleDiff'] = $diffResult;
-		// compare texts
-		$fromText = mb_convert_encoding($versions['toSkriv'], 'HTML-ENTITIES', 'UTF-8');
-		$toText = mb_convert_encoding($versions['fromSkriv'], 'HTML-ENTITIES', 'UTF-8');
-		$finediff = new FineDiff($fromText, $toText, FineDiff::$wordGranularity);
-		$diffResult = $finediff->renderDiffToHTML();
-		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
-		$this['skrivDiff'] = $diffResult;
+		[$titleDiff, $skrivDiff] = $this->_loader->pageDao->compareVersions($versionFrom, $versionTo);
+		$this['titleDiff'] = $titleDiff;
+		$this['skrivDiff'] = $skrivDiff;
 	}
 
 	/* *********** PRIVATE METHODS ************* */
@@ -397,7 +370,7 @@ class Page extends \Temma\Web\Controller {
 	 * @param	string	$text	SkrivML text.
 	 * @return	array	Array with the HTML result, and the raw Table Of Contents.
 	 */
-	private function _render($text) {
+	private function _render(string $text) {
 		$params = [
 			'firstTitleLevel'	=> 2,
 			'addFootnotes'		=> true,
