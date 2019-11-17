@@ -97,14 +97,17 @@ class PageDao {
 	}
 	/**
 	 * Returns sub-pages of a given page.
-	 * @param	int	$id	(optional) Parent page identifier.
+	 * @param	int	$id		(optional) Parent page identifier.
+	 * @param	int	$excludeId	(optional) ID of a page to exclude from the list.
 	 * @return	array	List of associative arrays.
 	 */
-	public function getSubPages(int $id=0) : array {
+	public function getSubPages(int $id=0, ?int $excludeId=null) : array {
 		$sql = "SELECT *
 			FROM Page
-			WHERE parentPageId = " . $this->_db->quote($id) . "
-			ORDER BY `priority`";
+			WHERE parentPageId = " . $this->_db->quote($id) . " ";
+		if ($excludeId)
+			$sql .= "AND id != " . $this->_db->quote($excludeId) . " ";
+		$sql .= "ORDER BY `priority`";
 		$pages = $this->_db->queryAll($sql);
 		$pagesIds = [];
 		$pagesList = [];

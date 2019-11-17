@@ -30,13 +30,14 @@ class Page extends \Temma\Web\Controller {
 	public function show(int $id=0, string $title=null) {
 		TµLog::log('ark', 'DEBUG', "Show action.");
 		// check root page
-		if ($this['CONTROLLER'] == 'page' && (!$id || !is_numeric($id))) {
+		if ($this['CONTROLLER'] == 'page' && !$id) {
 			$this->redirect('/');
 			return (self::EXEC_HALT);
 		}
 		// get page's data
 		$userId = $this['user']['id'] ?? 0;
 		$page = $this->_loader->pageDao->get($id, null, $userId);
+		// check URL
 		if ($id != 0) {
 			// check page's title
 			$pageTitle = \Temma\Utils\Text::urlize($page['title']);
@@ -74,7 +75,7 @@ class Page extends \Temma\Web\Controller {
 		TµLog::log('ark', 'INFO', "GetSubLevels action.");
 		$this['page'] = ['id' => $pageId];
 		$this['parentSubLevelId'] = $parentLevelId;
-		$sub = $this->_loader->pageDao->getSubPages($parentLevelId);
+		$sub = $this->_loader->pageDao->getSubPages($parentLevelId, $pageId);
 		$this['subLevelPages'] = $sub;
 	}
 	/**
