@@ -83,18 +83,18 @@
 						</form></div>
 					{/if}
 					{if is_array($page.toc) && ($page.toc|@count > 1 || (is_array($page.toc[0].sub) && $page.toc[0].sub|@count > 1))}
-					<nav id="nav-content" class="nav flex-column mt-4">
-						{foreach $page.toc as $item}
-							<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value|escape}</a>
-							{if $item.sub}
-								<blockquote>
-									{foreach $item.sub as $subitem}
-										<a href="#{$subitem.id|escape}" class="nav-link smooth-scroll">{$subitem.value|escape}</a>
-									{/foreach}
-								</blockquote>
-							{/if}
-						{/foreach}
-					</nav>
+						<nav id="nav-content" class="nav flex-column mt-4">
+							{foreach $page.toc as $item}
+								<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
+								{if $item.sub}
+									<blockquote>
+										{foreach $item.sub as $subitem}
+											<a href="#{$subitem.id|escape}" class="nav-link smooth-scroll">{$subitem.value}</a>
+										{/foreach}
+									</blockquote>
+								{/if}
+							{/foreach}
+						</nav>
 					{/if}
 				</div>
 			</div>
