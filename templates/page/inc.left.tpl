@@ -1,6 +1,6 @@
 <aside class="app-aside app-aside-expand-md app-aside-light">
 	<div class="aside-content">
-		<div class="aside-menu p-3" style="padding-top: 0;">
+		<div class="aside-menu {*p-3*}" style="padding-top: 0;">
 			<nav id="stacked-menu" class="stacked-menu" style="padding-top: 0;">
 				<ul class="menu">
 					{if $ACTION == "versions" && $versions}
@@ -53,9 +53,25 @@
 					{elseif !$page && $user}
 						<li class="menu-header" style="margin-top: 0;"><a href="/page/create/0" class="btn btn-success" title="Add a sub-page"><i class="fas fa-plus"></i></a></li>
 					{elseif $page}
-						{if $ACTION == "version" || $user}
+						{if $user}
 							<li class="menu-header" style="margin-top: 0;">
-								{if $ACTION == "version"}
+								{if $ACTION == 'edit' || $ACTION == 'create'}
+									{if $conf.allowReadOnly && $conf.allowPrivatePages}
+										<div class="custom-control custom-switch" style="margin-bottom: 1rem;"
+										 title="This page will be visible only for logged users">
+											<input id="check-private" type="checkbox" name="private" value="1" class="custom-control-input"
+											 {if $page.isPrivate}checked="checked"{/if} onchange="$('#hidden-check-private').val(this.checked ? '1' : '0')">
+											<label class="custom-control-label" for="check-private" style="padding-top: 0.2rem; text-transform: none; color: #666;">
+												Private page
+											</label>
+										</div>
+									{/if}
+									<button class="btn btn-success" onclick="$('#form').submit()"><i class="fas fa-check"></i> Save page</button>
+									<button onclick="if (confirm('Cancel page edition?')) document.location.href='/page/show/{$page.id}/{$page.url}';"
+									 title="Cancel" class="btn btn-danger" style="float: right;"><i class="fas fa-times"></i></button>
+								{elseif $ACTION == 'create'}
+									<a href="/page/show/{$page.id}/{$page.url}" class="btn btn-danger">Cancel creation</a>
+								{elseif $ACTION == "version"}
 									<a href="/page/show/{$page.id}" class="btn btn-info" title="See the last version"><i class="fas fa-eye"></i></a>
 								{elseif $user}
 									<a href="/page/create/{$page.id}" class="btn btn-success" title="Add a sub-page"><i class="fas fa-plus"></i></a>
@@ -73,7 +89,7 @@
 						{* breadcrumbs *}
 						<li class="menu-header" style="text-transform: none;"><a href="/"><i class="fas fa-home"></i> Homepage</a></li>
 						{foreach $breadcrumb as $crumb}
-							<li class="menu-header" style="text-transform: none; margin-top: 0; padding-top: 0;"><a href="/page/show/{$crumb.id}"><i class="fas {*fa-caret-right*} fa-reply fa-rotate-180"></i> {$crumb.title|escape}</a></li>
+							<li class="menu-header" style="text-transform: none; margin-top: 0; padding-top: 0;"><a href="/page/show/{$crumb.id}"><i class="fas fa-reply fa-rotate-180"></i> {$crumb.title|escape}</a></li>
 						{/foreach}
 						{if !$showAsSubPage}
 							<li class="menu-header" style="text-transform: none; padding-top: 0; margin-top: 0;"><a href="$URL"><i class="fas {*fa-chevron-right*} fa-reply-all fa-rotate-180"></i> {$page.title|escape}</a></li>
@@ -82,10 +98,10 @@
 				</ul>
 				{* list of subpages *}
 				{if $ACTION != 'version' && $subPages}
-					<ul class="menu _pages-sortable">
+					<ul class="menu striped _pages-sortable">
 						{foreach name=subPages from=$subPages item=subPage}
 							<li id="subpage-{$subPage.id}" class="menu-item {if $showAsSubPage && $subPage.id == $page.id}has-active{/if}">
-								<a href="/page/show/{$subPage.id}/{$subPage.url}" class="menu-link" style="padding-right: 0;"><span class="menu-text">
+								<a href="/page/show/{$subPage.id}/{$subPage.url}" class="menu-link" style="xpadding-right: 0;"><span class="menu-text">
 									{if $subPage.nbrChildren}
 										<i class="fas fa-caret-right" style="float: right; opacity: 0.5;"></i>
 									{/if}

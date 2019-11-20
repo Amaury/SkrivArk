@@ -106,17 +106,24 @@ header.page-title-bar h1 {
 	content: none;
 }
 /* tables */
-#content table {
+#content table,
+.note-editor table {
 	margin-bottom: 2em;
 }
+#content table,
+.note-editor table,
 table.bordered {
 	border: 1px solid #888;
 }
+#content table th,
+.note-editor table th,
 table.bordered th {
 	border: 1px solid #888;
 	padding: 3px;
 	background-color: #ddd;
 }
+#content table td,
+.note-editor table td,
 table.bordered td {
 	border: 1px solid #888;
 	padding: 3px;
@@ -187,6 +194,7 @@ div#skrivhtml {
 	padding: 1%;
 	background-color: #fff;
 }
+
 /* footnotes */
 div#skrivhtml div.footnotes {
 	margin-top: 2em;
@@ -198,3 +206,38 @@ div#skrivhtml div.footnotes p.footnote {
 	font-size: 0.9em;
 }
 
+/* dropdowns */
+.dropdown-toggle > span.fa-caret-down {
+	display: none;
+}
+
+/* summernote */
+.panel-heading.note-toolbar .dropdown-menu.dropdown-style {
+	min-width: 180px !important;
+}
+.panel-heading.note-toolbar .dropdown-menu.dropdown-style li {
+	padding: 0.2rem 0.5rem;
+}
+div.note-popover.popover.in.note-table-popover.bottom {
+	z-index: 9999999 !important;
+}
+.note-modal {
+	z-index: 9999999 ! important;
+}
+.tooltip {
+	z-index: 9999999 !important;
+}
+
+/* menu */
+ul.menu.striped li {
+	border-top: 0.8px solid #fdfdfd;
+	border-bottom: 1px solid #eee;
+}
+ul.menu.striped li:hover {
+	border-bottom: 0.8px solid #f2f2f2;
+	border-top: 1px solid #eaeaea;
+	background-color: #e6e7e9;
+}
+ul.menu.striped li a {
+	padding-right: 0.8rem;
+}

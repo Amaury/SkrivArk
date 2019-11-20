@@ -35,27 +35,39 @@ class Page extends \Temma\Web\Controller {
 			return (self::EXEC_HALT);
 		}
 		// get page's data
+		$allowReadOnly = $this['conf']['allowReadOnly'] ?? false;
+		$allowPrivatePages = $this['conf']['allowPrivatePages'] ?? false;
 		$userId = $this['user']['id'] ?? 0;
-		$page = $this->_loader->pageDao->get($id, null, $userId);
-		// check URL
 		if ($id != 0) {
-			// check page's title
+			$page = $this->_loader->pageDao->get($id, null, $userId);
+			// check page
+			if (!isset($page['id'])) {
+				$this->httpError(404);
+				return (self::EXEC_HALT);
+			}
+			// check URL
 			$pageTitle = \Temma\Utils\Text::urlize($page['title']);
 			if ($pageTitle != $title) {
 				$this->redirect("/page/show/$id/$pageTitle");
 				return (self::EXEC_HALT);
 			}
+			// check if private
+			if (!$userId && $page['isPrivate'] && $allowReadOnly && $allowPrivatePages) {
+				$this->redirect('/authentication/login');
+				return (self::EXEC_HALT);
+			}
+			// get breadcrumb
+			$breadcrumb = $this->_loader->pageDao->getBreadcrumb($page);
+			$this['breadcrumb'] = $breadcrumb;
 		}
-		// get breadcrumb
-		$breadcrumb = $this->_loader->pageDao->getBreadcrumb($page);
-		$this['breadcrumb'] = $breadcrumb;
 		// manage sub-page
 		$showAsSubPage = (!$this['user'] && $id && !$page['nbrChildren']) ? true : false;
+		$privateStatus = (!$userId && $allowReadOnly && $allowPrivatePages) ? false : null;
 		// get subpages
 		if ($showAsSubPage)
-			$subPages = $this->_loader->pageDao->getSubPages($page['parentPageId']);
+			$subPages = $this->_loader->pageDao->getSubPages($page['parentPageId'], null, $privateStatus);
 		else
-			$subPages = $this->_loader->pageDao->getSubPages($id);
+			$subPages = $this->_loader->pageDao->getSubPages($id, null, $privateStatus);
 		foreach ($subPages as &$subPage) {
 			$subPage['url'] = \Temma\Utils\Text::urlize($subPage['title']);
 		}
@@ -63,7 +75,7 @@ class Page extends \Temma\Web\Controller {
 		$this['subPages'] = $subPages;
 		$this['showAsSubPage'] = $showAsSubPage;
 		// get level 0 subpages (for page move)
-		$level0 = $this->_loader->pageDao->getSubPages(0);
+		$level0 = $this->_loader->pageDao->getSubPages(0, null, $privateStatus);
 		$this['subLevelPages'] = $level0;
 	}
 	/**
@@ -73,9 +85,13 @@ class Page extends \Temma\Web\Controller {
 	 */
 	public function getSubLevels(int $pageId, int $parentLevelId=0) {
 		TµLog::log('ark', 'INFO', "GetSubLevels action.");
+		$userId = $this['user']['id'] ?? 0;
+		$allowReadOnly = $this['conf']['allowReadOnly'] ?? false;
+		$allowPrivatePages = $this['conf']['allowPrivatePages'] ?? false;
+		$privateStatus = (!$userId && $allowReadOnly && $allowPrivatePages) ? false : null;
 		$this['page'] = ['id' => $pageId];
 		$this['parentSubLevelId'] = $parentLevelId;
-		$sub = $this->_loader->pageDao->getSubPages($parentLevelId, $pageId);
+		$sub = $this->_loader->pageDao->getSubPages($parentLevelId, $pageId, $privateStatus);
 		$this['subLevelPages'] = $sub;
 	}
 	/**
@@ -102,11 +118,13 @@ class Page extends \Temma\Web\Controller {
 		}
 		// get page's data
 		$page = $this->_loader->pageDao->get($id, $versionId);
-		[$html, $toc] = $this->_render($page['skriv']);
-		$page['html'] = $html;
+		$page['html'] = $page['sourceHtml'];
+		$page['url'] = \Temma\Utils\Text::urlize($page['title']);
 		$this['page'] = $page;
 		$this['editContent'] = $this->_loader->session['editContent'];
 		unset($this->_loader->session['editContent']);
+		$this['isPrivate'] = $this->_loader->session['isPrivate'];
+		unset($this->_loader->session['isPrivate']);
 	}
 	/**
 	 * Update a page.
@@ -120,15 +138,20 @@ class Page extends \Temma\Web\Controller {
 			return (self::EXEC_FORWARD);
 		}
 		// get data
-		$title = trim($_POST['title']);
+		$title = trim($_POST['title'] ?? '');
+		$html = trim($_POST['content'] ?? '');
+		$isPrivate = (isset($_POST['private']) && $_POST['private'] == '1') ? true : false;
 		if (empty($title)) {
-			$this->_session->set('editContent', $_POST['content']);
+			$this->_loader->session['editContent'] = $html;
+			$this->_loader->session['isPrivate'] = $isPrivate;
 			$this->redirect("/page/edit/$id");
 			return (self::EXEC_HALT);
 		}
-		[$html, $toc] = $this->_render($_POST['content']);
+		// cleanup content
+		$html = $this->_cleanupHtml($html);
+		$toc = $this->_generateToc($html);
 		// update the page
-		$this->_loader->pageDao->addVersion($id, $this['user']['id'], $title, $_POST['content'], $html, $toc);
+		$this->_loader->pageDao->addVersion($id, $this['user']['id'], $title, $html, $toc, $isPrivate);
 		// warn all subscribers
 		$subscribers = $this->_loader->pageDao->getSubscribers($id, $this['user']['id']);
 		if (!empty($subscribers)) {
@@ -168,13 +191,12 @@ class Page extends \Temma\Web\Controller {
 		}
 		// get data
 		$parentPage = $this->_loader->pageDao->get($parentId);
+		$parentPage['url'] = \Temma\Utils\Text::urlize($parentPage['title']);
 		$breadcrumb = $this->_loader->pageDao->getBreadcrumb($parentPage);
 		$breadcrumb = is_array($breadcrumb) ? $breadcrumb : [];
-		if (isset($parentPage))
-			$breadcrumb[] = $parentPage;
-		$this['editContent'] = $this->_loader->session->get('editContent');
-		$this->_loader->session->set('editContent', null);
-		$this['page'] = $page;
+		$this['editContent'] = $this->_loader->session['editContent'];
+		unset($this->_loader->session['editContent']);
+		$this['page'] = $parentPage;
 		$this['breadcrumb'] = $breadcrumb;
 		$this['parentId'] = $parentId;
 		$this->template('page/edit.tpl');
@@ -190,16 +212,20 @@ class Page extends \Temma\Web\Controller {
 			$this->redirect("/page/show/$id");
 			return (self::EXEC_FORWARD);
 		}
-		$title = trim($_POST['title']);
 		// get data
+		$title = trim($_POST['title'] ?? '');
+		$html = trim($_POST['content'] ?? '');
+		$isPrivate = (isset($_POST['private']) && $_POST['private'] == '1') ? true : false;
 		if (empty($title)) {
-			$this->_loader->session->set('editContent', $_POST['content']);
+			$this->_loader->session['editContent'] = $html;
 			$this->redirect("/page/create/$id");
 			return (self::EXEC_HALT);
 		}
-		[$html, $toc] = $this->_render($_POST['content']);
+		// cleanup content
+		$html = $this->_cleanupHtml($html);
+		$toc = $this->_generateToc($html);
 		// create the new page
-		$id = $this->_loader->pageDao->add($parentId, $this['user']['id'], $title, $_POST['content'], $html, $toc);
+		$id = $this->_loader->pageDao->add($parentId, $this['user']['id'], $title, $html, $toc, $isPrivate);
 		// is there subscribers to the parent page?
 		if ($parentId) {
 			$subscribers = $this->_loader->pageDao->getSubscribers($parentId, $this['user']['id']);
@@ -360,27 +386,54 @@ class Page extends \Temma\Web\Controller {
 		$this['versionFrom'] = $versionFrom;
 		$this['versionTo'] = $versionTo;
 		// get versions for diff
-		[$titleDiff, $skrivDiff] = $this->_loader->pageDao->compareVersions($versionFrom, $versionTo);
+		[$titleDiff, $htmlDiff] = $this->_loader->pageDao->compareVersions($versionFrom, $versionTo);
 		$this['titleDiff'] = $titleDiff;
-		$this['skrivDiff'] = $skrivDiff;
+		$this['htmlDiff'] = $htmlDiff;
 	}
 
 	/* *********** PRIVATE METHODS ************* */
 	/**
-	 * Render a SkrivML text in HTML.
-	 * @param	string	$text	SkrivML text.
-	 * @return	array	Array with the HTML result, and the raw Table Of Contents.
+	 * Cleanup an HTML string.
+	 * @param	string	$html	Input HTML.
+	 * @return	string	The cleaned HTML.
 	 */
-	private function _render(string $text) {
-		$params = [
-			'firstTitleLevel'	=> 2,
-			'addFootnotes'		=> true,
-			'codeInlineStyles'	=> true,
-		];
-		$skrivRenderer = \Skriv\Markup\Renderer::factory('html', $params);
-		$html = $skrivRenderer->render($text);
-		$toc = $skrivRenderer->getToc(true);
-		return ([$html, $toc]);
+	private function _cleanupHtml(string $html) : string {
+		$html = isset($_POST['content']) ? \Temma\Utils\HTMLCleaner::clean($html) : '';
+		$h1Found = (strpos($html, '<h1>') === false) ? false : true;
+		foreach ([5, 4, 3, 2, 1] as $level) {
+			$sublevel = $level + 1;
+			if ($h1Found) {
+				$html = str_replace(["<h$level>", "</h$level>"], ["<h$sublevel>", "</h$sublevel>"], $html);
+			}
+			$regex = "/<h$sublevel>([^<]*)<\\/h$sublevel>/i";
+			$html = preg_replace_callback($regex, function($matches) use ($sublevel) {
+				if (!isset($matches[1]))
+					return ($matches[0]);
+				return ("<h$sublevel id=\"h$sublevel-" . \Temma\Utils\Text::urlize($matches[1]) . '">' . $matches[1] . "</h$sublevel>");
+			}, $html);
+		}
+		return ($html);
+	}
+	/**
+	 * Generate the table of contents.
+	 * @param	string	$html	Input HTML.
+	 * @return	array	List of elements.
+	 */
+	private function _generateToc(string $html) : array {
+		$tags = new SimpleXMLElement('<html>' . $html . '</html>');
+		$toc = [];
+		$lastIndex = -1;
+		foreach ($tags as $tag) {
+			$tagName = $tag->getName();
+			if (!in_array($tagName, ['h2', 'h3']))
+				continue;
+			$toc[] = [
+				'type'  => $tagName,
+				'value' => (string)$tag,
+				'id'    => $tagName . '-' . \Temma\Utils\Text::urlize((string)$tag),
+			];
+		}
+		return ($toc);
 	}
 }
 

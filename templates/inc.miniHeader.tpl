@@ -13,7 +13,7 @@
 	{* Google font *}
 	<link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600" rel="stylesheet"><!-- End Google font -->
 	{* Favicons *}
-	<link rel="icon" type="image/png" href="/favicon.png" />
+	{*<link rel="icon" type="image/png" href="/favicon.png" />*}
 	<link rel="shortcut icon" href="/favicon.ico">
 	<meta name="theme-color" content="#070B0F">
 	{* BEGIN PLUGINS STYLES *}
@@ -35,7 +35,14 @@
 	{if $conf.disqus}
 		<script src="//{$conf.disqus}.disqus.com/embed.js" async></script>
 	{/if}
-
+	{* WYSIWYG editor *}
+	{if $CONTROLLER == 'page' && ($ACTION == 'edit' || $ACTION == 'create')}
+		<link href="/vendors/summernote/summernote-bs4.css" rel="stylesheet">
+	{/if}
+	{* code prettifier *}
+	{if $URL == '/' || ($CONTROLLER == 'page' && $ACTION == 'show')}
+		<link rel="stylesheet" type="text/css" href="/vendors/google-code-prettify/prettify.css">
+	{/if}
 </head>
 <body data-spy="scroll" data-target="#nav-content" data-offset="76">
 <div class="app">

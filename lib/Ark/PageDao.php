@@ -36,13 +36,13 @@ class PageDao {
 	/**
 	 * Returns a page.
 	 * @param	int	$id		Page's identifier.
-	 * @param	int	$versionId	(optional) Identifier of the version to fetch.
+	 * @param	?int	$versionId	(optional) Identifier of the version to fetch.
 	 * @param	?int	$userId		(optional) If given, fetch the user's subscription on the page.
 	 * @return	array	Associative array.
 	 */
 	public function get(int $id, ?int $versionId=null, ?int $userId=null) : array {
 		$sql = "SELECT	Page.*,
-				PageVersion.skriv,
+				PageVersion.html AS sourceHtml,
 				(SELECT COUNT(*) FROM PageVersion WHERE pageId = Page.id) AS nbrVersions,
 				(SELECT COUNT(*) FROM Page sub WHERE sub.parentPageId = Page.id) AS nbrChildren,
 				creator.name AS creatorName,
@@ -99,14 +99,17 @@ class PageDao {
 	 * Returns sub-pages of a given page.
 	 * @param	int	$id		(optional) Parent page identifier.
 	 * @param	int	$excludeId	(optional) ID of a page to exclude from the list.
+	 * @param	bool	$private	(optional) True to get only private pages, false to get only non-private pages, null to get all pages. Null by default.
 	 * @return	array	List of associative arrays.
 	 */
-	public function getSubPages(int $id=0, ?int $excludeId=null) : array {
+	public function getSubPages(int $id=0, ?int $excludeId=null, ?bool $private) : array {
 		$sql = "SELECT *
 			FROM Page
 			WHERE parentPageId = " . $this->_db->quote($id) . " ";
 		if ($excludeId)
 			$sql .= "AND id != " . $this->_db->quote($excludeId) . " ";
+		if (is_bool($private))
+			$sql .= "AND isPrivate = " . ($private ? 'TRUE' : 'FALSE') . " ";
 		$sql .= "ORDER BY `priority`";
 		$pages = $this->_db->queryAll($sql);
 		$pagesIds = [];
@@ -176,9 +179,9 @@ class PageDao {
 	 */
 	public function compareVersions(int $fromId, int $toId) {
 		$sql = "SELECT  pageFrom.title AS fromTitle,
-				pageFrom.skriv AS fromSkriv,
+				pageFrom.html AS fromHtml,
 				pageTo.title AS toTitle,
-				pageTo.skriv AS toSkriv
+				pageTo.html AS toHtml
 			FROM PageVersion pageFrom
 				INNER JOIN PageVersion pageTo ON (pageFrom.pageId = pageTo.pageId)
 			WHERE pageFrom.id = " . $this->_db->quote($fromId) . "
@@ -194,11 +197,11 @@ class PageDao {
 		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
 		$result[] = $diffResult;
 		// compare texts
-		$fromText = mb_convert_encoding($versions['toSkriv'], 'HTML-ENTITIES', 'UTF-8');
-		$toText = mb_convert_encoding($versions['fromSkriv'], 'HTML-ENTITIES', 'UTF-8');
-		$finediff = new \FineDiff($fromText, $toText, \FineDiff::$wordGranularity);
-		$diffResult = $finediff->renderDiffToHTML();
-		$diffResult = htmlspecialchars_decode(htmlspecialchars_decode($diffResult));
+		$fromText = $versions['toHtml'];
+		$toText = $versions['fromHtml'];
+		$finediff = new \HtmlDiff\HtmlDiff($fromText, $toText);
+		$finediff->build();
+		$diffResult = $finediff->getDifference();
 		$result[] = $diffResult;
 		return ($result);
 	}
@@ -227,16 +230,17 @@ class PageDao {
 	 * @param	int	$parentId	Parent page identifier.
 	 * @param	int	$creatorId	Creator identifier.
 	 * @param	string	$title		Page's title.
-	 * @param	string	$skriv		SkrivML text.
 	 * @param	string	$html		HTML text.
 	 * @param	?array	$toc		Table Of Contents.
+	 * @param	bool	$isPrivate	True if the page is private. False otherwise.
 	 * @return	int	Page's identifier.
 	 */
-	public function add(int $parentId, int $creatorId, string $title, string $skriv, string $html, ?array $toc) : int {
+	public function add(int $parentId, int $creatorId, string $title, string $html, ?array $toc, bool $isPrivate) : int {
 		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
 			SET title = " . $this->_db->quote($title) . ",
-			    skriv = " . $this->_db->quote($skriv) . ",
+			    html = " . $this->_db->quote($html) . ",
+			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
 			    creationDate = NOW(),
 			    creatorId = " . $this->_db->quote($creatorId);
 		$this->_db->exec($sql);
@@ -255,6 +259,7 @@ class PageDao {
 			    creationDate = NOW(),
 			    modifDate = NOW(),
 			    priority = " . ($prio['prio'] + 1) . ",
+			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
 			    parentPageId = " . $this->_db->quote($parentId) . ",
 			    currentVersionId = " . $this->_db->quote($versionId);
 		$this->_db->exec($sql);
@@ -270,17 +275,18 @@ class PageDao {
 	}
 	/**
 	 * Update a page by adding a new version.
-	 * @param	int	$id	Page's identifier.
-	 * @param	int	$userId	Modifier's identifier.
-	 * @param	string	$title	Page's title.
-	 * @param	string	$skriv	SkrivML text.
-	 * @param	string	$html	HTML text.
-	 * @param	array	$toc	Table Of Content.
+	 * @param	int	$id		Page's identifier.
+	 * @param	int	$userId		Modifier's identifier.
+	 * @param	string	$title		Page's title.
+	 * @param	string	$html		HTML text.
+	 * @param	array	$toc		Table Of Content.
+	 * @param	bool	$isPrivate	True if the page is private. False otherwise.
 	 */
-	public function addVersion(int $id, int $userId, string $title, string $skriv, string $html, ?array $toc) /* : void */ {
+	public function addVersion(int $id, int $userId, string $title, string $html, ?array $toc, bool $isPrivate) /* : void */ {
 		$sql = "INSERT INTO PageVersion
 			SET title = " . $this->_db->quote($title) . ",
-			    skriv = " . $this->_db->quote($skriv) . ",
+			    html = " . $this->_db->quote($html) . ",
+			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
 			    creationDate = NOW(),
 			    creatorId = " . $this->_db->quote($userId) . ",
 			    pageId = " . $this->_db->quote($id);
@@ -290,6 +296,7 @@ class PageDao {
 			SET title = " . $this->_db->quote($title) . ",
 			    html = " . $this->_db->quote($html) . ",
 			    toc = " . $this->_db->quote(json_encode($toc)) . ",
+			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
 			    modifDate = NOW(),
 			    currentVersionId = '$versionId'
 			WHERE id = " . $this->_db->quote($id);

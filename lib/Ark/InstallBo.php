@@ -68,7 +68,7 @@ class InstallBo {
 			// connexion
 			$db = \Temma\Base\Database::factory($dsn);
 			$db->exec("DO 1");
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			return (null);
 		}
 		return ($db);
@@ -140,31 +140,33 @@ class InstallBo {
 	}
 	/**
 	 * Update some parameters of the 'temma.json' configuration file.
-	 * @param	string	$sitename	Name of the site.
-	 * @param	string	$baseUrl	Base URL.
-	 * @param	string	$emailSender	Sender's email address.
-	 * @param	bool	$demomode	True to activate the demo mode.
-	 * @param	bool	$allowReadOnly	True to allow read-only access.
-	 * @param	?string	$disqus		Disqus key.
-	 * @param	?string	$gAnalytics	Google Analytics key.
-	 * @param	string	$loglevel	Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
+	 * @param	string	$sitename		Name of the site.
+	 * @param	string	$baseUrl		Base URL.
+	 * @param	string	$emailSender		Sender's email address.
+	 * @param	bool	$demomode		True to activate the demo mode.
+	 * @param	bool	$allowReadOnly		True to allow read-only access.
+	 * @param	bool	$allowPrivatePages	True to allow private pages.
+	 * @param	?string	$disqus			Disqus key.
+	 * @param	?string	$gAnalytics		Google Analytics key.
+	 * @param	string	$loglevel		Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
 	 */
 	public function updateConfigParameters(string $sitename, string $baseUrl, string $emailSender,
-	                                       bool $demomode, bool $allowReadOnly, string $disqus,
-	                                       string $gAnalytics, string $loglevel) /* : void */ {
+	                                       bool $demomode, bool $allowReadOnly, bool $allowPrivatePages,
+	                                       string $disqus, string $gAnalytics, string $loglevel) /* : void */ {
 		// update temma.json
 		$temma = $this->_readConf();
 		$temma['loglevels']['Temma/Base'] = $loglevel;
 		$temma['loglevels']['Temma/Web'] = $loglevel;
 		$temma['loglevels']['ark'] = $loglevel;
 		$temma['autoimport'] = [
-			'sitename'        => $sitename,
-			'baseURL'         => $baseUrl,
-			'emailSender'     => $emailSender,
-			'demoMode'        => $demomode,
-			'allowReadOnly'   => $allowReadOnly,
-			'disqus'          => $disqus,
-			'googleAnalytics' => $gAnalytics,
+			'sitename'          => $sitename,
+			'baseURL'           => $baseUrl,
+			'emailSender'       => $emailSender,
+			'demoMode'          => $demomode,
+			'allowReadOnly'     => $allowReadOnly,
+			'allowPrivatePages' => $allowPrivatePages,
+			'disqus'            => $disqus,
+			'googleAnalytics'   => $gAnalytics,
 		];
 		$this->_writeConf($temma);
 		// management of the demo mode

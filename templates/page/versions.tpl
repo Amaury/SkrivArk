@@ -10,7 +10,7 @@
 					<h1 class="page-title">{$titleDiff}</h1>
 				</header>
 				<div id="content" class="page-section">
-					<pre style="white-space: pre-wrap;">{$skrivDiff}</pre>
+					{*<pre style="white-space: pre-wrap;">*}{$htmlDiff}{*</pre>*}
 				</div>
 			</div>
 		</div>

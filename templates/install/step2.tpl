@@ -23,7 +23,7 @@
 
 <main class="app-main" style="font-size: 1rem;">
 	<div class="container" style="padding-top: 2.4rem;">
-		<h2 style="margin-top: 40px;">Step 2 <small>Memcache server</small></h2>
+		<h2 style="margin-top: 40px;">Step 2 <small>Sessions management</small></h2>
 		{if $cacheerror}
 			<div id="panel-error" class="card bg-danger p-3">
 				Unable to connect to the server. Please check your parameters.
@@ -33,13 +33,14 @@
 			<div class="form-group">
 				<label>Server type</label>
 				<div class="form-check">
-					<input id="check-nocache" class="form-check-input" type="radio" name="cacheserver" value="nocache" onchange="processCheckbox(this.checked)">
+					<input id="check-nocache" class="form-check-input" type="radio" name="cacheserver" value="nocache" checked
+					 onchange="processCheckbox(this.checked)">
 					<label class="form-check-label" for="check-nocache">
 						No Memcache/Redis server
 					</label>
 				</div>
 				<div class="form-check">
-					<input id="check-memcache" class="form-check-input" type="radio" name="cacheserver" value="memcache" checked
+					<input id="check-memcache" class="form-check-input" type="radio" name="cacheserver" value="memcache"
 					 onchange="processCheckbox(!this.checked); $('#edit-cacheport').val('11211');">
 					<label class="form-check-label" for="check-memcache">
 						Memcache
@@ -55,12 +56,12 @@
 			</div>
 			<div class="form-group">
 				<label for="edit-cachehost">Hostname</label>
-				<input id="edit-cachehost" type="text" name="cachehost" placeholder="localhost"
+				<input id="edit-cachehost" type="text" name="cachehost" placeholder="localhost" disabled
 				 value="{if $cachehost}{$cachehost|escape}{else}localhost{/if}" class="form-control" />
 			</div>
 			<div class="form-group">
 				<label class="control-label" for="edit-cacheport">Port number</label>
-				<input id="edit-cacheport" type="text" name="cacheport" placeholder="11211"
+				<input id="edit-cacheport" type="text" name="cacheport" placeholder="11211" disabled
 				 value="{if $cacheport}{$cacheport|escape}{else}11211{/if}" class="form-control" maxlength="5" />
 			</div>
 			<div class="form-group">

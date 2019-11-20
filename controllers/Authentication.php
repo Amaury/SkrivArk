@@ -36,9 +36,7 @@ class Authentication extends \Temma\Web\Plugin {
 	public function auth() {
 		$email = $_POST['email'];
 		$pwd = $_POST['password'];
-		TµLog::log('ark', 'DEBUG', "Auth user '$email'.");
 		$user = $this->_loader->userDao->getFromCredentials($email, $pwd);
-		TµLog::log('ark', 'DEBUG', "Fetched user:" . print_r($user, true));
 		if (!isset($user['id'])) {
 			// unknown user
 			$this->_loader->session['emailLogin'] = $email;

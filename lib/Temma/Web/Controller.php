@@ -273,8 +273,8 @@ class Controller implements \ArrayAccess {
 		try {
 			$status = $obj->$method(...$parameters);
 		} catch (\ArgumentCountError $ace) {
-			TµLog::log('Temma/Web', 'ERROR', "Bad number of parameters given to the method '$method' on controller '$controller'.");
-			throw new \Temma\Exceptions\HttpException("Bad number of parameters given to the method '$method' on controller '$controller'.", 404);
+			TµLog::log('Temma/Web', 'ERROR', "$controller::$method: " . $ace->getMessage());
+			throw new \Temma\Exceptions\HttpException("$controller::$method: " . $ace->getMessage(), 404);
 		} catch (\Error $e) {
 			TµLog::log('Temma/Web', 'ERROR', "$controller::$method: " . $e->getMessage());
 			throw new \Temma\Exceptions\HttpException("Unable to execute method '$method' on controller '$controller'.", 404);

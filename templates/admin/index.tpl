@@ -135,15 +135,27 @@ var adm = new function() {
 				</div>
 				<div class="form-group">
 					<label>Options</label>
-					<div class="form-check">
-						<input id="check-demo" type="checkbox" name="demomode" value="1" {if $conf.demoMode}checked="checked"{/if} />
-						<label class="form-check-label" for="check-demo">Demo mode</label>
+					<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+						<input id="check-demo" type="checkbox" name="demomode" value="1" class="custom-control-input"
+						 {if $conf.demoMode}checked="checked"{/if}>
+						<label class="custom-control-label" for="check-demo" style="padding-top: 0.05rem;">
+							Demo mode
+						</label>
 					</div>
-					<div class="form-check">
-						<input id="check-ro" type="checkbox" name="allowreadonly" value="1" {if $conf.allowReadOnly}checked="checked"{/if} />
-						<label class="form-check-label" for="check-ro">
+					<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+						<input id="check-ro" type="checkbox" name="allowreadonly" value="1" class="custom-control-input"
+						 {if $conf.allowReadOnly}checked="checked"{/if} onchange="$('#check-private').prop('disabled', !this.checked)">
+						<label class="custom-control-label" for="check-ro" style="padding-top: 0.05rem;">
 							Allow read-only
-							<small>Pages are readable even for non-logged visitors</small>
+							<small style="color: gray;">Pages are readable even for non-logged visitors</small>
+						</label>
+					</div>
+					<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+						<input id="check-private" type="checkbox" name="allowprivatepages" value="1" class="custom-control-input"
+						 {if $conf.allowPrivatePages}checked="checked"{/if} {if !$conf.allowReadOnly}disabled{/if}>
+						<label class="custom-control-label" for="check-private" style="padding-top: 0.05rem;">
+							Allow private pages
+							<small style="color: gray;">Private pages are visible only for logged users</small>
 						</label>
 					</div>
 				</div>

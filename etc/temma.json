@@ -1,17 +1,30 @@
 {
-	"application": {
-		"dataSources": {
-			"db": "dummy://",
-			"cache": "dummy://"
-		},
-		"sessionName": "ArkSession",
-		"sessionSource": "cache",
-		"rootController": "Install",
-		"loader": "\\Ark\\Loader"
-	},
-	"loglevels": {
-		"Temma/Base": "DEBUG",
-		"Temma/Web": "DEBUG",
-		"ark": "DEBUG"
-	}
+    "application": {
+        "dataSources": {
+            "db": "mysql:\/\/ark:ark@localhost\/ark"
+        },
+        "sessionName": "ArkSession",
+        "rootController": "Page",
+        "loader": "\\Ark\\Loader"
+    },
+    "loglevels": {
+        "Temma\/Base": "DEBUG",
+        "Temma\/Web": "DEBUG",
+        "ark": "DEBUG"
+    },
+    "autoimport": {
+        "sitename": "Ark demo",
+        "baseURL": "http:\/\/ark.ordi.org",
+        "emailSender": "amaury@amaury.net",
+        "demoMode": false,
+        "allowReadOnly": true,
+        "allowPrivatePages": false,
+        "disqus": "",
+        "googleAnalytics": ""
+    },
+    "plugins": {
+        "_pre": [
+            "Authentication"
+        ]
+    }
 }

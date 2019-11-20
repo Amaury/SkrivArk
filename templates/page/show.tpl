@@ -1,23 +1,4 @@
 {include file="inc.header.tpl"}
-<style type="text/css">{literal}
-	table.bordered {
-		border: 1px solid #888;
-	}
-	table.bordered th {
-		border: 1px solid #888;
-		padding: 3px;
-		background-color: #ddd;
-	}
-	table.bordered td {
-		border: 1px solid #888;
-		padding: 3px;
-		background-color: #fff;
-	}
-	div.bordered {
-		border: 1px solid #888;
-		display: inline-block;
-	}
-{/literal}</style>
 
 {include file="page/inc.modal-move.tpl"}
 
@@ -43,7 +24,12 @@
 				{else}
 					{* title *}
 					<header class="page-title-bar">
-						<h1 class="page-title">{$page.title|escape}</h1>
+						<h1 class="page-title">
+							{if $conf.allowReadOnly && $conf.allowPrivatePages && $page.isPrivate}
+								<i class="fas fa-lock" title="This page is private. Only loggued users can see it."></i>
+							{/if}
+							{$page.title|escape}
+						</h1>
 					</header>
 					{* content *}
 					<div id="content" class="page-section">
@@ -82,18 +68,28 @@
 							</label>
 						</form></div>
 					{/if}
+					{* Table of Contents *}
 					{if is_array($page.toc) && ($page.toc|@count > 1 || (is_array($page.toc[0].sub) && $page.toc[0].sub|@count > 1))}
 						<nav id="nav-content" class="nav flex-column mt-4">
-							{foreach $page.toc as $item}
-								<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
-								{if $item.sub}
+							{for $index=0 to $page.toc|@count}
+								{$item = $page.toc[$index]}
+								{if $item.type == 'h2'}
+									<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
+								{elseif $item.type == 'h3'}
 									<blockquote>
-										{foreach $item.sub as $subitem}
-											<a href="#{$subitem.id|escape}" class="nav-link smooth-scroll">{$subitem.value}</a>
-										{/foreach}
+										<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
+										{for $subindex=$index+1 to $page.toc|@count}
+											{$item = $page.toc[$subindex]}
+											{if $item.type == 'h3'}
+												<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
+											{else}
+												{$index=$subindex}
+												{break}
+											{/if}
+										{/for}
 									</blockquote>
 								{/if}
-							{/foreach}
+							{/for}
 						</nav>
 					{/if}
 				</div>
@@ -101,5 +97,13 @@
 		</div>
 	</div>
 </main>
+
+<script>{literal}
+	$(document).ready(function() {
+		// prettyprint
+		$("#content pre").addClass("prettyprint");
+		PR.prettyPrint();
+	});
+{/literal}</script>
 
 {include file="inc.footer.tpl"}
