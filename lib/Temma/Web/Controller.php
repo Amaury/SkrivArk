@@ -1,16 +1,17 @@
 <?php
 
+/**
+ * Controller
+ * @author	Amaury Bouchard <amaury@amaury.net>
+ * @copyright	© 2012-2019, Amaury Bouchard
+ */
+
 namespace Temma\Web;
 
 use \Temma\Base\Log as TµLog;
 
 /**
  * Basic object for controllers management.
- *
- * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2012-2019, Amaury Bouchard
- * @package	Temma
- * @subpackage	Web
  */
 class Controller implements \ArrayAccess {
 	/** Execution flow constant: go to the next step (next plugin, for example). */

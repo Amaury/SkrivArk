@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * Database
+ * @author	Amaury Bouchard <amaury@amaury.net>
+ * @copyright	© 2007-2019, Amaury Bouchard
+ */
+
 namespace Temma\Base;
 
 use \Temma\Base\Log as TµLog;
@@ -60,11 +66,6 @@ use \Temma\Base\Log as TµLog;
  *	 $db->rollback();
  * }
  * </code>
- *
- * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2007-2019, Amaury Bouchard
- * @package	Temma
- * @subpackage	Base
  */
 class Database extends \Temma\Base\Datasource {
 	/** Database connection objet. */
@@ -258,7 +259,7 @@ class Database extends \Temma\Base\Datasource {
 	/**
 	 * Executes a SQL request without fetching data.
 	 * @param	string	$sql	The SQL request.
-	 * @return	int	The number of modified lines. For an asynchronous request, the returned value shouldn't be used.
+	 * @return	int	The number of modified lines.
 	 * @throws	\Exception	If something went wrong.
 	 */
 	public function exec(string $sql) : int {

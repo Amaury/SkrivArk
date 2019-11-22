@@ -12,7 +12,7 @@ use \Temma\Base\Log as TµLog;
  * @package	SkrivArk
  * @subpackage	Ark
  */
-class ExportBo {
+class ExportBo implements \Temma\Base\Loadable {
 	/** Loader. */
 	private $_loader = null;
 

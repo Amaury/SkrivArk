@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * HTMLCleaner
+ * @author	Amaury Bouchard <amaury@amaury.net>
+ * @copyright	© 2010-2019, Amaury Bouchard
+ */
+
 namespace Temma\Utils;
 
 require_once("HTMLPurifier.auto.php");
@@ -16,10 +22,6 @@ require_once("HTMLPurifier.auto.php");
  * $html = \Temma\Utils\HTMLCleaner::process($html);
  * </code>
  *
- * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2010-2019, Amaury Bouchard
- * @package	Temma
- * @subpackage	Utils
  * @see		http://htmlpurifier.org/
  */
 class HTMLCleaner {

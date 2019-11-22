@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * NDatabase
+ * @author	Amaury Bouchard <amaury@amaury.net>
+ * @copyright	© 2012-2019, Amaury Bouchard
+ */
+
 namespace Temma\Base;
 
 use \Temma\Base\Log as TµLog;
@@ -48,11 +54,6 @@ use \Temma\Base\Log as TµLog;
  *     print("Database error: " . $e->getMessage());
  * }
  * </code>
- *
- * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2012-2019, Amaury Bouchard
- * @package	Temma
- * @subpackage	Base
  */
 class NDatabase extends \Temma\Base\Datasource {
 	/** Default Redis connection port. */
