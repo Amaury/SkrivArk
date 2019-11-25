@@ -32,7 +32,8 @@ CREATE TABLE Page (
 	parentPageId		INT UNSIGNED NOT NULL DEFAULT '0',
 	currentVersionId	INT UNSIGNED NOT NULL DEFAULT '0',
 	PRIMARY KEY (id),
-	INDEX parentPageId (parentPageId)
+	INDEX parentPageId (parentPageId),
+	FULLTEXT title_html (title, html)
 ) ENGINE=InnoDB DEFAULT CHARSET utf8mb4 DEFAULT COLLATE utf8mb4_general_ci;
 
 -- PageVersion

@@ -34,6 +34,23 @@ class PageDao {
 		return ($n['n']);
 	}
 	/**
+	 * Search pages.
+	 * @param	string	$s		Search string.
+	 * @param	?bool	$private	True to search only private pages, false to search only non-private pages, null to search all pages. Null by default.
+	 * @return	?array	List of associative arrays.
+	 */
+	public function search(string $s, ?bool $private) : ?array {
+		$sql = "SELECT id, title, html
+			FROM Page
+			WHERE MATCH(title, html) AGAINST (" . $this->_db->quote($s) . " IN NATURAL LANGUAGE MODE) ";
+		if ($private === true)
+			$sql .= "AND isPrivate = TRUE ";
+		else if ($private === false)
+			$sql .= "AND isPrivate = FALSE ";
+		$result = $this->_db->queryAll($sql);
+		return ($result);
+	}
+	/**
 	 * Returns a page.
 	 * @param	int	$id		Page's identifier.
 	 * @param	?int	$versionId	(optional) Identifier of the version to fetch.

@@ -8,12 +8,16 @@
 			</span></a>
 		</div>
 		<div class="top-bar-list">
+			{* hamburger menu *}
 			<div class="top-bar-item px-2 d-md-none d-lg-none d-xl-none">
-				{* hamburger menu *}
 				<button class="hamburger hamburger-squeeze" type="button" data-toggle="aside" aria-label="Menu"><span class="hamburger-box"><span class="hamburger-inner"></span></span></button>
 			</div>
+			{* search *}
+			<form class="form-inline mt-2 mt-md-0 d-none d-md-block" method="get" action="/page/search">
+				<input class="form-control mr-sm-2" type="text" name="s" placeholder="Search" aria-label="Search" value="{$s|escape}" onfocus="this.select()">
+			</form>
+			{* header links *}
 			<div class="top-bar-item top-bar-item-right pr-3 pr-lg-4">
-				<!-- .nav -->
 				<ul class="header-nav nav">
 					{if $user}
 						{if $user.admin}

@@ -241,3 +241,8 @@ ul.menu.striped li:hover {
 ul.menu.striped li a {
 	padding-right: 0.8rem;
 }
+
+/* search */
+.highlight {
+	background-color: #ffffaa;
+}

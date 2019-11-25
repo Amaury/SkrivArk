@@ -22,6 +22,24 @@ class Page extends \Temma\Web\Controller {
 		$this['splashscreen'] = $splashscreen;
 		$this->template('page/show.tpl');
 	}
+	/** Search pages. */
+	public function search() {
+		TµLog::log('ark', 'DEBUG', "Search action.");
+		$s = $_GET['s'] ?? '';
+		$currentUser = $this['user'] ?? null;
+		$allowReadOnly = $this['conf']['allowReadOnly'] ?? false;
+		$allowPrivatePages = $this['conf']['allowPrivatePages'] ?? false;
+		$private = ($currentUser && $allowReadOnly && $allowPrivatePages) ? null : false;
+		$result = $this->_loader->pageDao->search($s, $private);
+		foreach ($result as &$link) {
+			$link['url'] = \Temma\Utils\Text::urlize($link['title']);
+			$excerpt = $this->_excerpt(strip_tags($link['html']), $s);
+			$excerpt = trim($excerpt);
+			$link['excerpt'] = $excerpt ?: (substr(strip_tags($link['html']), 0, 80) . ' (...)');
+		}
+		$this['s'] = $s;
+		$this['result'] = $result;
+	}
 	/**
 	 * Displays a page.
 	 * @param	int	$id	Page's identifier.
@@ -191,7 +209,7 @@ class Page extends \Temma\Web\Controller {
 		}
 		// get data
 		$parentPage = $this->_loader->pageDao->get($parentId);
-		$parentPage['url'] = \Temma\Utils\Text::urlize($parentPage['title']);
+		$parentPage['url'] = \Temma\Utils\Text::urlize($parentPage['title'] ?? '');
 		$breadcrumb = $this->_loader->pageDao->getBreadcrumb($parentPage);
 		$breadcrumb = is_array($breadcrumb) ? $breadcrumb : [];
 		$this['editContent'] = $this->_loader->session['editContent'];
@@ -434,6 +452,36 @@ class Page extends \Temma\Web\Controller {
 			];
 		}
 		return ($toc);
+	}
+	/**
+	 * Generate the excerpt of a text.
+	 * @param	string	$text	Input text.
+	 * @param	string	$query	The query.
+	 * @return	string	Output text.
+	 * @link	https://stackoverflow.com/questions/1292121/how-to-generate-the-snippet-like-those-generated-by-google-with-php-and-mysql
+	 */
+	private function _excerpt(string $text, string $query) : string {
+		$text = "\n {$text}\n";
+		// words
+		$words = join('|', explode(' ', preg_quote($query)));
+
+		// lookahead/behind assertions ensures cut between words
+		$s = '\s\x00-/:-@\[-`{-~'; //character set for start/end of words
+		preg_match_all('#(?<=[' . $s . ']).{1,60}((' . $words . ').{1,60})+(?=[' . $s . '])#uis', $text, $matches, PREG_SET_ORDER);
+
+		// delimiter between occurences
+		$results = [];
+		foreach ($matches as $line) {
+			$results[] = htmlspecialchars($line[0], 0, 'UTF-8');
+		}
+		if (count($results) == 1)
+			$result = $results[0] . ' (...)';
+		else
+			$result = join(' (...) ', $results);
+		// highlight
+		$result = preg_replace('#' . $words . '#iu', "<span class=\"highlight\">\$0</span>", $result);
+
+		return ($result);
 	}
 }
 
