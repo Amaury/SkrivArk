@@ -25,6 +25,11 @@ class Page extends \Temma\Web\Controller {
 	/** Search pages. */
 	public function search() {
 		TµLog::log('ark', 'DEBUG', "Search action.");
+		$searchable = $this['conf']['searchable'] ?? false;
+		if (!$searchable) {
+			$this->httpError(404);
+			return (self::EXEC_HALT);
+		}
 		$s = $_GET['s'] ?? '';
 		$currentUser = $this['user'] ?? null;
 		$allowReadOnly = $this['conf']['allowReadOnly'] ?? false;

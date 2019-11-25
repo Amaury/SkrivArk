@@ -55,6 +55,14 @@
 					</label>
 				</div>
 				<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+					<input id="check-searchable" type="checkbox" name="searchable" value="1" class="custom-control-input"
+					 {if $searchable !== false}checked="checked"{/if}>
+					<label class="custom-control-label" for="check-searchable" style="padding-top: 0.05rem;">
+						Searchable
+						<small style="color: gray;">Contents could be searched</small>
+					</label>
+				</div>
+				<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
 					<input id="check-ro" type="checkbox" name="allowreadonly" value="1" class="custom-control-input"
 					 {if $allowreadonly !== false}checked="checked"{/if} onchange="$('#check-private').prop('disabled', !this.checked)">
 					<label class="custom-control-label" for="check-ro" style="padding-top: 0.05rem;">

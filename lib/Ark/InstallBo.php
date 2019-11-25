@@ -144,6 +144,7 @@ class InstallBo {
 	 * @param	string	$baseUrl		Base URL.
 	 * @param	string	$emailSender		Sender's email address.
 	 * @param	bool	$demomode		True to activate the demo mode.
+	 * @param	bool	$searchable		True to make contents searchable.
 	 * @param	bool	$allowReadOnly		True to allow read-only access.
 	 * @param	bool	$allowPrivatePages	True to allow private pages.
 	 * @param	?string	$disqus			Disqus key.
@@ -151,8 +152,9 @@ class InstallBo {
 	 * @param	string	$loglevel		Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
 	 */
 	public function updateConfigParameters(string $sitename, string $baseUrl, string $emailSender,
-	                                       bool $demomode, bool $allowReadOnly, bool $allowPrivatePages,
-	                                       string $disqus, string $gAnalytics, string $loglevel) /* : void */ {
+	                                       bool $demomode, bool $searchable, bool $allowReadOnly,
+	                                       bool $allowPrivatePages, string $disqus, string $gAnalytics,
+	                                       string $loglevel) /* : void */ {
 		// update temma.json
 		$temma = $this->_readConf();
 		$temma['loglevels']['Temma/Base'] = $loglevel;
@@ -163,6 +165,7 @@ class InstallBo {
 			'baseURL'           => $baseUrl,
 			'emailSender'       => $emailSender,
 			'demoMode'          => $demomode,
+			'searchable'        => $searchable,
 			'allowReadOnly'     => $allowReadOnly,
 			'allowPrivatePages' => $allowPrivatePages,
 			'disqus'            => $disqus,
