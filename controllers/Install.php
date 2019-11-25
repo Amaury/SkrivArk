@@ -110,6 +110,7 @@ class Install extends \Temma\Web\Controller {
 		$searchable = (($_POST['searchable'] ?? 0) == 1) ? true : false;
 		$allowreadonly = (($_POST['allowreadonly'] ?? 0) == 1) ? true : false;
 		$allowprivatepages = (($_POST['allowprivatepages'] ?? 0) == 1) ? true : false;
+		$darktheme = (($_POST['darktheme'] ?? 0) == 1) ? true : false;
 		$disqus = trim($_POST['disqus'] ?? null);
 		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
 		$loglevel = trim($_POST['loglevel'] ?? null);
@@ -119,13 +120,13 @@ class Install extends \Temma\Web\Controller {
 			                '&baseurl=' . urlencode($baseurl) . '&emailsender=' . urlencode($emailsender) .
 			                '&demomode=' . ($demomode ? 1 : 0) . '&searchable=' . ($searchable ? 1 : 0) .
 			                '&allowreadonly=' . ($allowreadonly ? 1 : 0) . '&allowprivatepages=' . ($allowprivatepages ? 1 : 0) .
-			                '&disqus=' . urlencode($disqus) . '&googleanalytics=' . urlencode($googleanalytics) .
-			                '&loglevel=' . urlencode($loglevel));
+			                '&darktheme=' . ($darktheme ? 1 : 0) . '&disqus=' . urlencode($disqus) .
+			                '&googleanalytics=' . urlencode($googleanalytics) . '&loglevel=' . urlencode($loglevel));
 			return (self::EXEC_HALT);
 		}
 		// update temma.json and manage demo mode
 		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $searchable, $allowreadonly,
-		                                                  $allowprivatepages, $disqus, $googleanalytics, $loglevel);
+		                                                  $allowprivatepages, $darktheme, $disqus, $googleanalytics, $loglevel);
 		$this->redirect('/install/step4');
 	}
 	/** Step 4. */

@@ -20,16 +20,14 @@
 	<link rel="stylesheet" href="/css/open-iconic-bootstrap.min.css">
 	<link rel="stylesheet" href="/vendors/fontawesome/css/all.css">
 	{* BEGIN THEME STYLES *}
-	<link rel="stylesheet" href="/css/theme.min.css" data-skin="default">
-	<link rel="stylesheet" href="/css/theme-dark.min.css" data-skin="dark"><!-- Disable unused skin immediately -->
-	<script>
-		var skin = localStorage.getItem('skin') || 'default';
-		var unusedLink = document.querySelector('link[data-skin]:not([data-skin="' + skin + '"])');
-		unusedLink.setAttribute('rel', '');
-		unusedLink.setAttribute('disabled', true);
-	</script>
+	{if $conf.darkTheme}
+		<link rel="stylesheet" href="/css/theme-dark.min.css" data-skin="default">
+		<link href="/css/style-dark.css" rel="stylesheet" media="screen" />
+	{else}
+		<link rel="stylesheet" href="/css/theme.min.css" data-skin="default">
+		<link href="/css/style.css" rel="stylesheet" media="screen" />
+	{/if}
 	{* main *}
-	<link href="/css/style.css" rel="stylesheet" media="screen" />
 	<script src="/js/ark.js"></script>
 	{* Disqus *}
 	{if $conf.disqus}

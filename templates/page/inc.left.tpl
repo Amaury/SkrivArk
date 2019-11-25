@@ -13,6 +13,33 @@
 								document.location.href = url;
 							}
 						{/literal}</script>
+						{foreach name="versions" from=$versions item=version}
+							<li style="margin: 0; padding: 0; border-top: 1px solid #ccc; background-color: {if $version.id == $versionFrom}#ddffdd{elseif $version.id == $versionTo}#fdd{else}{cycle values="#ddd,#eee"}{/if}; {if $version.id == $versionFrom || $version.id == $versionTo}font-weight: bold;{/if}"
+							 title="{if $version.id == $versionFrom}This is the version of reference{elseif $version.id == $versionTo}This is the compared version{else}Define the version to compare{/if}">
+								<a id="link-version-{$version.id}"
+								 {if $version.id == $versionFrom || $version.id == $versionTo}href="#" onclick="return false"
+								 {else}href="/page/versions/{$page.id}/{$versionFrom}/{$version.id}"{/if}>
+									{if $smarty.foreach.versions.index}
+										<i class="fas fa-pencil-alt" onclick="loadPage({$version.id}, '/page/edit/{$page.id}/{$version.id}')"
+										 title="Edit the page from this version" style="float: right; margin-left: 4px; cursor: pointer; margin-top: 4px;"></i>
+									{else}
+										<span class="float-right" style="width: 18px;">&nbsp;</span>
+									{/if}
+									{if $version.id == $versionFrom}
+										<i class="fas fa-plus"></i>
+										<span style="width: 18px;">&nbsp;</span>
+									{elseif $version.id == $versionTo}
+										<i class="fas fa-minus"></i>
+										<span style="width: 18px;">&nbsp;</span>
+									{else}
+										<span class="float-left" style="width: 18px; height: 36px;">&nbsp;</span>
+										<i class="fas fa-map-marker float-right" title="Define the version of reference" style="margin-top: 4px;"
+										 onclick="loadPage({$version.id}, '/page/versions/{$page.id}/{$version.id}/{$versionTo}')"></i>
+									{/if}
+									{$version.creationDate|date_format:"%Y-%m-%d %H:%M"}<br />{$version.name|escape}
+								</a>
+							</li>
+						{/foreach}
 						<div style="margin-left: 5em; font-size: 0.7em; color: #888;">
 							<i class="fas fa-plus"></i> Version of reference<br />
 							<i class="fas fa-minus"></i> Compared version<br />
@@ -74,7 +101,7 @@
 					<ul class="menu striped _pages-sortable" {if !$showBreadcrumbs}style="margin-top: 0;"{/if}>
 						{foreach name=subPages from=$subPages item=subPage}
 							<li id="subpage-{$subPage.id}" class="menu-item {if $showAsSubPage && $subPage.id == $page.id}has-active{/if}">
-								<a href="/page/show/{$subPage.id}/{$subPage.url}" class="menu-link" style="xpadding-right: 0;"><span class="menu-text">
+								<a href="/page/show/{$subPage.id}/{$subPage.url}" class="menu-link" style="white-space: normal;"><span class="menu-text">
 									{if $subPage.nbrChildren}
 										<i class="fas fa-caret-right" style="float: right; opacity: 0.5;"></i>
 									{/if}

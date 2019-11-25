@@ -147,14 +147,15 @@ class InstallBo {
 	 * @param	bool	$searchable		True to make contents searchable.
 	 * @param	bool	$allowReadOnly		True to allow read-only access.
 	 * @param	bool	$allowPrivatePages	True to allow private pages.
+	 * @param	bool	$darkTheme		True to use dark theme.
 	 * @param	?string	$disqus			Disqus key.
 	 * @param	?string	$gAnalytics		Google Analytics key.
 	 * @param	string	$loglevel		Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
 	 */
 	public function updateConfigParameters(string $sitename, string $baseUrl, string $emailSender,
 	                                       bool $demomode, bool $searchable, bool $allowReadOnly,
-	                                       bool $allowPrivatePages, string $disqus, string $gAnalytics,
-	                                       string $loglevel) /* : void */ {
+	                                       bool $allowPrivatePages, bool $darkTheme, string $disqus,
+	                                       string $gAnalytics, string $loglevel) /* : void */ {
 		// update temma.json
 		$temma = $this->_readConf();
 		$temma['loglevels']['Temma/Base'] = $loglevel;
@@ -168,6 +169,7 @@ class InstallBo {
 			'searchable'        => $searchable,
 			'allowReadOnly'     => $allowReadOnly,
 			'allowPrivatePages' => $allowPrivatePages,
+			'darkTheme'         => $darkTheme,
 			'disqus'            => $disqus,
 			'googleAnalytics'   => $gAnalytics,
 		];
@@ -187,7 +189,7 @@ class InstallBo {
 			}
 		}
 	}
-	/**Update the 'temma.json' configuration file to finish the installation process. */
+	/** Update the 'temma.json' configuration file to finish the installation process. */
 	public function updateConfigFinish() /* : void */ {
 		$temma = $this->_readConf();
 		$temma['application']['rootController'] = 'Page';

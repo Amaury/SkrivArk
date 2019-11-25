@@ -79,7 +79,7 @@ var adm = new function() {
 				{/foreach}
 			</tbody>
 		</table>
-		<div class="card" style="background-color: #fff;">
+		<div class="card" xstyle="background-color: #fff;">
 			<div class="card-header">
 				<h4>Add user</h4>
 			</div>
@@ -164,6 +164,13 @@ var adm = new function() {
 						<label class="custom-control-label" for="check-private" style="padding-top: 0.05rem;">
 							Allow private pages
 							<small style="color: gray;">Private pages are visible only for logged users</small>
+						</label>
+					</div>
+					<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+						<input id="check-darktheme" type="checkbox" name="darktheme" value="1" class="custom-control-input"
+						 {if $conf.darkTheme}checked="checked"{/if}>
+						<label class="custom-control-label" for="check-darktheme" style="padding-top: 0.05rem;">
+							Dark theme
 						</label>
 					</div>
 				</div>

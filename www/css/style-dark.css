@@ -1,0 +1,253 @@
+/* ********************** LOGIN ****************** */
+.form-signin {
+	max-width: 300px;
+	padding: 19px 29px 29px;
+	margin: 0 auto 20px;
+	background-color: #fff;
+	border: 1px solid #e5e5e5;
+	-webkit-border-radius: 5px;
+	   -moz-border-radius: 5px;
+	        border-radius: 5px;
+	-webkit-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+	   -moz-box-shadow: 0 1px 2px rgba(0,0,0,.05);
+	        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+	margin-bottom: 10px;
+}
+.form-signin input[type="text"],
+.form-signin input[type="password"] {
+	font-size: 16px;
+	height: auto;
+	margin-bottom: 15px;
+	padding: 7px 9px;
+}
+
+body.coloredBackground {
+	background-color: #f5f5f5;
+}
+
+/* text colors */
+.red {
+	color: brown;
+}
+.blue {
+	color: blue;
+}
+
+/* titles */
+h2 {
+	border-bottom: 1px solid #ddd;
+}
+
+/* bold */
+.bold {
+	font-weight: bold;
+}
+
+/* grey alert box */
+.alert-grey {
+	border-color: #ccc;
+	background-color: #eee;
+	color: #888;
+}
+
+/* footer */
+.footer {
+	background-color: #222230;
+	border-top: 1px solid #444;
+	margin-top: 70px;
+	padding: 30px 0;
+	text-align: center;
+}
+.footer p {
+	color: #eee;
+	margin-bottom: 0;
+}
+
+/* ******* CONTENT ********** */
+/* titles */
+header.page-title-bar h1 {
+	margin-bottom: 1.0em;
+}
+#content {
+	counter-reset: h2counter;
+}
+#content h2 {
+	counter-reset: h3counter;
+}
+#content h2:before {
+	content: counter(h2counter) ".\0000a0";
+	counter-increment: h2counter;
+}
+#content h2:only-of-type:before {
+	content: none;
+	counter-increment: none;
+}
+#content h2:not(:first-child) {
+	margin-top: 1em;
+}
+#content h3 {
+	counter-reset: h4counter;
+}
+#content h3:before {
+	content: counter(h2counter) "." counter(h3counter) ".\0000a0";
+	counter-increment: h3counter;
+}
+#content h3:only-of-type:before {
+	content: none;
+}
+#content h4:before {
+	content: counter(h2counter) "." counter(h3counter) "." counter(h4counter) ".\0000a0";
+	counter-increment: h4counter;
+}
+#content h4:only-of-type:before {
+	content: none;
+}
+/* tables */
+#content table,
+.note-editor table {
+	margin-bottom: 2em;
+}
+#content table,
+.note-editor table,
+table.bordered {
+	border: 1px solid #888;
+}
+#content table th,
+.note-editor table th,
+table.bordered th {
+	border: 1px solid #888;
+	padding: 3px;
+	background-color: #eee;
+	color: #333;
+}
+#content table td,
+.note-editor table td,
+table.bordered td {
+	border: 1px solid #888;
+	padding: 3px;
+	background-color: transparent;
+}
+div.bordered {
+	border: 1px solid #888;
+	display: inline-block;
+}
+
+/* code */
+pre {
+	font-size: 1rem;
+	background-color: #fafafa;
+	padding: 0.3rem;
+	color: #333;
+}
+pre[class^="language-"] {
+	border: 1px solid #444;
+	background-color: #cbd0db;
+	/*color: #c0c5ce;*/
+	color: #333;
+}
+
+/* icons */
+li.menu-header > a.btn {
+	margin-top: 2px;
+}
+
+/* ******* DIFF ********** */
+del {
+	text-decoration: line-through;
+	background-color: #b00;
+}
+ins {
+	text-decoration: none;
+	background-color: #080;
+}
+
+/* ***** EDIT ***** */
+div#body-content {
+	position: absolute;
+	top: 118px;
+	bottom: 5px;
+	left: 0;
+	right: 0;
+}
+/* textarea */
+textarea#skrivtext {
+	position: absolute;
+	font-family: monospace;
+	margin: 1%; 
+	width: 48%;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	color: #000;
+}
+/* content */
+div#skrivhtml {
+	position: absolute;
+	overflow: auto;
+	margin: 1%;
+	width: 46%;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	border: 1px solid #000;
+	padding: 1%;
+	background-color: #fff;
+}
+
+/* footnotes */
+div#skrivhtml div.footnotes {
+	margin-top: 2em;
+	border-top: 1px dashed #aaa;
+	padding-top: 1em;
+}
+div#skrivhtml div.footnotes p.footnote {
+	margin: 0;
+	font-size: 0.9em;
+}
+
+/* dropdowns */
+.dropdown-toggle > span.fa-caret-down {
+	display: none;
+}
+
+/* summernote */
+.panel-heading.note-toolbar .dropdown-menu.dropdown-style {
+	min-width: 180px !important;
+}
+.panel-heading.note-toolbar .dropdown-menu.dropdown-style li {
+	padding: 0.2rem 0.5rem;
+}
+div.note-popover.popover.in.note-table-popover.bottom {
+	z-index: 9999999 !important;
+}
+.note-modal {
+	z-index: 9999999 ! important;
+}
+.tooltip {
+	z-index: 9999999 !important;
+}
+
+/* menu */
+ul.menu.striped li {
+	border-top: 0;
+	border-bottom: 0.3px solid #25252f;
+}
+ul.menu.striped li:first-child {
+	border-top: 0.3px solid #25252f;
+}
+ul.menu.striped li:hover {
+	border-bottom: 0;
+	border-top: 0;
+	background-color: #333340;
+}
+ul.menu.striped li a {
+	padding-right: 0.8rem;
+}
+
+/* search */
+.highlight {
+	background-color: #660;
+}

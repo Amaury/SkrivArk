@@ -78,6 +78,13 @@
 						<small style="color: gray;">Private pages are visible only for logged users</small>
 					</label>
 				</div>
+				<div class="custom-control custom-switch" style="margin-bottom: 0.5rem;">
+					<input id="check-darktheme" type="checkbox" name="darktheme" value="1" class="custom-control-input"
+					 {if $darktheme === true}checked="checked"{/if}>
+					<label class="custom-control-label" for="check-darktheme" style="padding-top: 0.05rem;">
+						Dark theme
+					</label>
+				</div>
 			</div>
 			<div class="form-group">
 				<label for="edit-disqus">Disqus ID</label>
