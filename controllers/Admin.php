@@ -71,26 +71,7 @@ class Admin extends \Temma\Web\Controller {
 		if (!$generate)
 			return;
 		// send an email
-		$headers = "MIME-Version: 1.0\r\n" .
-			   "Content-type: text/html; charset=utf8\r\n" .
-			   "From: " . $this['conf']['emailSender'];
-		$msg = "<html><body>
-				<h1>" . htmlspecialchars($this['conf']['sitename']) . "</h1>
-				<p>Hi " . htmlspecialchars($name) . ",</p>
-				<p>
-					" . htmlspecialchars($this['user']['name']) . " has created an account for you on the
-					<a href=\"" . htmlspecialchars($this['conf']['baseURL']) . "\">" . htmlspecialchars($this['conf']['sitename']) . "</a> site.
-				</p>
-				<p>
-					Your temporary password is <strong>" . htmlspecialchars($password) . "</strong>
-				</p>
-				<p>
-					Best regards,<br />
-					The Skriv Team
-				</p>
-			</body></html>";
-		// send email
-		mail($email, '[' . $this['conf']['sitename'] . '] Account Creation', $msg, $headers);
+		$this->_loader->communicationBo->emailCreatedUser($this['user']['name'], $email, $name, $password);
 	}
 	/**
 	 * Change user admin status.

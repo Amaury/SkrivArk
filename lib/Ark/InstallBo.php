@@ -1,14 +1,15 @@
 <?php
 
+/**
+ * InstallBo
+ * @author	Amaury Bouchard <amaury@amaury.net>
+ * @copyright	© 2019, Amaury Bouchard
+ */
+
 namespace Ark;
 
 /**
  * Installation helper.
- *
- * @author	Amaury Bouchard <amaury@amaury.net>
- * @copyright	© 2019, Amaury Bouchard
- * @package	SkrivArk
- * @subpackage	Ark
  */
 class InstallBo {
 	/** Loader. */

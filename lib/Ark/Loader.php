@@ -25,6 +25,8 @@ class Loader extends \Temma\Base\Loader {
 			return (new \Ark\InstallBo($this));
 		if ($key == 'exportBo')
 			return (new \Ark\ExportBo($this));
+		if ($key == 'communicationBo')
+			return (new \Ark\CommunicationBo($this));
 		return (null);
 	}
 }

@@ -176,29 +176,7 @@ class Page extends \Temma\Web\Controller {
 		// update the page
 		$this->_loader->pageDao->addVersion($id, $this['user']['id'], $title, $html, $toc, $isPrivate);
 		// warn all subscribers
-		$subscribers = $this->_loader->pageDao->getSubscribers($id, $this['user']['id']);
-		if (!empty($subscribers)) {
-			$recipients = [];
-			foreach ($subscribers as $subscriber)
-				$recipients[] = $subscriber['email'];
-			$headers = "MIME-Version: 1.0\r\n" .
-				   "Content-type: text/html; charset=utf8\r\n" .
-				   "From: " . $this['conf']['emailSender'] . "\r\n" .
-				   "Bcc: " . implode(',', $recipients);
-			$msg = "<html><body>
-					<h1>" . htmlspecialchars($this['conf']['sitename']) . "</h1>
-					<p>Hi,</p>
-					<p>
-						" . htmlspecialchars($this['user']['name']) . " has modified the page
-						«&nbsp;<em><a href=\"" . htmlspecialchars($this['conf']['baseURL']) . "/page/show/$id\">". htmlspecialchars($title) . "</a></em>&nbsp;».
-					</p>
-					<p>
-						Best regards,<br />
-						The Skriv Team
-					</p>
-				</body></html>";
-			mail(null, '[' . $this['conf']['sitename'] . '] Page Modification', $msg, $headers);
-		}
+		$this->_loader->communicationBo->emailSubscribersModification($id, $title, $this['user']['id'], $this['user']['name']);
 		// redirection
 		$this->redirect("/page/show/$id");
 	}
@@ -251,29 +229,7 @@ class Page extends \Temma\Web\Controller {
 		$id = $this->_loader->pageDao->add($parentId, $this['user']['id'], $title, $html, $toc, $isPrivate);
 		// is there subscribers to the parent page?
 		if ($parentId) {
-			$subscribers = $this->_loader->pageDao->getSubscribers($parentId, $this['user']['id']);
-			if (!empty($subscribers)) {
-				$recipients = [];
-				foreach ($subscribers as $subscriber)
-					$recipients[] = $subscriber['email'];
-				$headers = "MIME-Version: 1.0\r\n" .
-					   "Content-type: text/html; charset=utf8\r\n" .
-					   "From: " . $this['conf']['emailSender'] . "\r\n" .
-					   "Bcc: " . implode(',', $recipients);
-				$msg = "<html><body>
-						<h1>" . htmlspecialchars($this['conf']['sitename']) . "</h1>
-						<p>Hi,</p>
-						<p>
-							" . htmlspecialchars($this['user']['name']) . " has created the page
-							«&nbsp;<em><a href=\"" . htmlspecialchars($this['conf']['baseURL']) . "/page/show/$id\">". htmlspecialchars($title) . "</a></em>&nbsp;».
-						</p>
-						<p>
-							Best regards,<br />
-							The Skriv Team
-						</p>
-					</body></html>";
-				mail(null, '[' . $this['conf']['sitename'] . '] Page Creation', $msg, $headers);
-			}
+			$this->_loader->communicationBo->emailSubscribersCreation($parentId, $title, $this['user']['id'], $this['user']['name']);
 		}
 		// redirection
 		$this->redirect("/page/show/$id");
@@ -302,29 +258,7 @@ class Page extends \Temma\Web\Controller {
 			return (self::EXEC_HALT);
 		}
 		// warn all subscribers
-		$subscribers = $this->_loader->pageDao->getSubscribers($id, $this['user']['id']);
-		if (!empty($subscribers)) {
-			$recipients = [];
-			foreach ($subscribers as $subscriber)
-				$recipients[] = $subscriber['email'];
-			$headers = "MIME-Version: 1.0\r\n" .
-				   "Content-type: text/html; charset=utf8\r\n" .
-				   "From: " . $this['conf']['emailSender'] . "\r\n" .
-				   "Bcc: " . implode(',', $recipients);
-			$msg = "<html><body>
-					<h1>" . htmlspecialchars($this['conf']['sitename']) . "</h1>
-					<p>Hi,</p>
-					<p>
-						" . htmlspecialchars($this['user']['name']) . " has removed the page
-						«&nbsp;<em>". htmlspecialchars($page['title']) . "</em>&nbsp;».
-					</p>
-					<p>
-						Best regards,<br />
-						The Skriv Team
-					</p>
-				</body></html>";
-			mail(null, '[' . $this['conf']['sitename'] . '] Page Deleted', $msg, $headers);
-		}
+		$this->_loader->communicationBo->emailSubscribersCreation($id, $title, $this['user']['id'], $this['user']['name']);
 		// remove the page
 		$this->_loader->pageDao->remove($id);
 		// redirection
