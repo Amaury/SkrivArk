@@ -24,7 +24,7 @@
 				{else}
 					{* title *}
 					<header class="page-title-bar">
-						<h1 class="page-title">
+						<h1>
 							{if $conf.allowReadOnly && $conf.allowPrivatePages && $page.isPrivate}
 								<i class="fas fa-lock" title="This page is private. Only loggued users can see it."></i>
 							{/if}
