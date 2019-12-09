@@ -41,6 +41,14 @@
 	{if $URL == '/' || ($CONTROLLER == 'page' && $ACTION == 'show')}
 		<link rel="stylesheet" type="text/css" href="/vendors/google-code-prettify/prettify.css">
 	{/if}
+	{* base font size *}
+	{if $conf.fontsize}
+		<style type="text/css">
+			{literal}html {{/literal}
+				font-size: {$conf.fontsize}px;
+			{literal}}{/literal}
+		</style>
+	{/if}
 </head>
 <body data-spy="scroll" data-target="#nav-content" data-offset="76">
 <div class="app">

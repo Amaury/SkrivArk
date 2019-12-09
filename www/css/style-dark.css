@@ -81,6 +81,7 @@ header.page-title-bar h1 {
 	content: counter(h2counter) ".\0000a0";
 	counter-increment: h2counter;
 }
+#content.nocount h2:before,
 #content h2:only-of-type:before {
 	content: none;
 	counter-increment: none;
@@ -95,6 +96,7 @@ header.page-title-bar h1 {
 	content: counter(h2counter) "." counter(h3counter) ".\0000a0";
 	counter-increment: h3counter;
 }
+#content.nocount h3:before,
 #content h3:only-of-type:before {
 	content: none;
 }
@@ -102,9 +104,16 @@ header.page-title-bar h1 {
 	content: counter(h2counter) "." counter(h3counter) "." counter(h4counter) ".\0000a0";
 	counter-increment: h4counter;
 }
+#content.nocount h4:before,
 #content h4:only-of-type:before {
 	content: none;
 }
+
+/* paragraphs*/
+#content p {
+	font-size: 1.2rem;
+}
+
 /* tables */
 #content table,
 .note-editor table {

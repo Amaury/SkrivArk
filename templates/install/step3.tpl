@@ -87,6 +87,26 @@
 				</div>
 			</div>
 			<div class="form-group">
+				<label>Base font size</label>
+				<select name="fontsize" class="form-control">
+					<option value="">Default browser setting</option>
+					<option value="12" {if $fontsize == 12}selected{/if}>12 pixels</option>
+					<option value="13" {if $fontsize == 13}selected{/if}>13 pixels</option>
+					<option value="14" {if $fontsize == 14}selected{/if}>14 pixels</option>
+					<option value="15" {if $fontsize == 15}selected{/if}>15 pixels</option>
+					<option value="16" {if $fontsize == 16}selected{/if}>16 pixels</option>
+					<option value="17" {if $fontsize == 17}selected{/if}>17 pixels</option>
+					<option value="18" {if $fontsize == 18}selected{/if}>18 pixels</option>
+					<option value="19" {if $fontsize == 19}selected{/if}>19 pixels</option>
+					<option value="20" {if $fontsize == 20}selected{/if}>20 pixels</option>
+					<option value="21" {if $fontsize == 21}selected{/if}>21 pixels</option>
+					<option value="22" {if $fontsize == 22}selected{/if}>22 pixels</option>
+					<option value="23" {if $fontsize == 23}selected{/if}>23 pixels</option>
+					<option value="24" {if $fontsize == 24}selected{/if}>24 pixels</option>
+					<option value="26" {if $fontsize == 26}selected{/if}>26 pixels</option>
+				</select>
+			</div>
+			<div class="form-group">
 				<label for="edit-disqus">Disqus ID</label>
 				<input type="text" id="edit-disqus" name="disqus" class="form-control" value="{$disqus|escape}" />
 				<small class="form-text text-muted"><a href="http://www.disqus.com/websites/" target="_blank" title="Disqus.com">Create your account</a> to add comments on your pages</small>

@@ -65,6 +65,14 @@
 											</label>
 										</div>
 									{/if}
+									<div class="custom-control custom-switch" style="margin-bottom: 1rem;"
+									 title="Titles and subtitles in content will be numbered">
+										<input id="check-count" type="checkbox" name="count" value="1" class="custom-control-input"
+										 {if !$page.nocount}checked="checked"{/if} onchange="$('#hidden-check-nocount').val(this.checked ? '0' : '1')">
+										<label class="custom-control-label" for="check-count" style="padding-top: 0.2rem; text-transform: none; color: #666;">
+											Numbered titles in content
+										</label>
+									</div>
 									<button class="btn btn-success" onclick="$('#form').submit()"><i class="fas fa-check"></i> Save page</button>
 									<button onclick="if (confirm('Cancel page edition?')) document.location.href='/page/show/{$page.id}/{$page.url}';"
 									 title="Cancel" class="btn btn-danger" style="float: right;"><i class="fas fa-times"></i></button>

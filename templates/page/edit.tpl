@@ -34,6 +34,7 @@
 				action="/page/storeEdit/{$page.id}"
 			 {/if}>
 				<input id="hidden-check-private" type="hidden" name="private" value="{if $page.isPrivate}1{else}0{/if}" />
+				<input id="hidden-check-nocount" type="hidden" name="nocount" value="{if $page.nocount}1{else}0{/if}" />
 				<div class="page-inner" style="posititon: relative;">
 					{* title *}
 					<header class="page-title-bar">

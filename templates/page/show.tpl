@@ -32,7 +32,7 @@
 						</h1>
 					</header>
 					{* content *}
-					<div id="content" class="page-section">
+					<div id="content" class="page-section {if $page.nocount}nocount{/if}">
 						{$page.html}
 					</div>
 					{* Disqus comments *}

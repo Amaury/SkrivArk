@@ -250,14 +250,16 @@ class PageDao {
 	 * @param	string	$html		HTML text.
 	 * @param	?array	$toc		Table Of Contents.
 	 * @param	bool	$isPrivate	True if the page is private. False otherwise.
+	 * @param	bool	$nocount	(optional) True if title must not be numbered. False by default.
 	 * @return	int	Page's identifier.
 	 */
-	public function add(int $parentId, int $creatorId, string $title, string $html, ?array $toc, bool $isPrivate) : int {
+	public function add(int $parentId, int $creatorId, string $title, string $html, ?array $toc, bool $isPrivate, bool $nocount=false) : int {
 		// add entry in PageVersion
 		$sql = "INSERT INTO PageVersion
 			SET title = " . $this->_db->quote($title) . ",
 			    html = " . $this->_db->quote($html) . ",
 			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
+			    nocount = " . ($nocount ? 'TRUE' : 'FALSE') . ",
 			    creationDate = NOW(),
 			    creatorId = " . $this->_db->quote($creatorId);
 		$this->_db->exec($sql);
@@ -277,6 +279,7 @@ class PageDao {
 			    modifDate = NOW(),
 			    priority = " . ($prio['prio'] + 1) . ",
 			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
+			    nocount = " . ($nocount ? 'TRUE' : 'FALSE') . ",
 			    parentPageId = " . $this->_db->quote($parentId) . ",
 			    currentVersionId = " . $this->_db->quote($versionId);
 		$this->_db->exec($sql);
@@ -298,12 +301,14 @@ class PageDao {
 	 * @param	string	$html		HTML text.
 	 * @param	array	$toc		Table Of Content.
 	 * @param	bool	$isPrivate	True if the page is private. False otherwise.
+	 * @param	bool	$nocount	(optional) True if title must not be numbered. False by default.
 	 */
-	public function addVersion(int $id, int $userId, string $title, string $html, ?array $toc, bool $isPrivate) /* : void */ {
+	public function addVersion(int $id, int $userId, string $title, string $html, ?array $toc, bool $isPrivate, bool $nocount=false) /* : void */ {
 		$sql = "INSERT INTO PageVersion
 			SET title = " . $this->_db->quote($title) . ",
 			    html = " . $this->_db->quote($html) . ",
 			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
+			    nocount = " . ($nocount ? 'TRUE' : 'FALSE') . ",
 			    creationDate = NOW(),
 			    creatorId = " . $this->_db->quote($userId) . ",
 			    pageId = " . $this->_db->quote($id);
@@ -314,6 +319,7 @@ class PageDao {
 			    html = " . $this->_db->quote($html) . ",
 			    toc = " . $this->_db->quote(json_encode($toc)) . ",
 			    isPrivate = " . ($isPrivate ? 'TRUE' : 'FALSE') . ",
+			    nocount = " . ($nocount ? 'TRUE' : 'FALSE') . ",
 			    modifDate = NOW(),
 			    currentVersionId = '$versionId'
 			WHERE id = " . $this->_db->quote($id);
