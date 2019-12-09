@@ -164,6 +164,7 @@ class Page extends \Temma\Web\Controller {
 		$title = trim($_POST['title'] ?? '');
 		$html = trim($_POST['content'] ?? '');
 		$isPrivate = (isset($_POST['private']) && $_POST['private'] == '1') ? true : false;
+		$nocount = (isset($_POST['nocount']) && $_POST['nocount'] == '1') ? true : false;
 		if (empty($title)) {
 			$this->_loader->session['editContent'] = $html;
 			$this->_loader->session['isPrivate'] = $isPrivate;
@@ -174,7 +175,7 @@ class Page extends \Temma\Web\Controller {
 		$html = $this->_cleanupHtml($html);
 		$toc = $this->_generateToc($html);
 		// update the page
-		$this->_loader->pageDao->addVersion($id, $this['user']['id'], $title, $html, $toc, $isPrivate);
+		$this->_loader->pageDao->addVersion($id, $this['user']['id'], $title, $html, $toc, $isPrivate, $nocount);
 		// warn all subscribers
 		$this->_loader->communicationBo->emailSubscribersModification($id, $title, $this['user']['id'], $this['user']['name']);
 		// redirection
@@ -217,6 +218,7 @@ class Page extends \Temma\Web\Controller {
 		$title = trim($_POST['title'] ?? '');
 		$html = trim($_POST['content'] ?? '');
 		$isPrivate = (isset($_POST['private']) && $_POST['private'] == '1') ? true : false;
+		$nocount = (isset($_POST['nocount']) && $_POST['nocount'] == '1') ? true : false;
 		if (empty($title)) {
 			$this->_loader->session['editContent'] = $html;
 			$this->redirect("/page/create/$id");
@@ -226,7 +228,7 @@ class Page extends \Temma\Web\Controller {
 		$html = $this->_cleanupHtml($html);
 		$toc = $this->_generateToc($html);
 		// create the new page
-		$id = $this->_loader->pageDao->add($parentId, $this['user']['id'], $title, $html, $toc, $isPrivate);
+		$id = $this->_loader->pageDao->add($parentId, $this['user']['id'], $title, $html, $toc, $isPrivate, $nocount);
 		// is there subscribers to the parent page?
 		if ($parentId) {
 			$this->_loader->communicationBo->emailSubscribersCreation($parentId, $title, $this['user']['id'], $this['user']['name']);
