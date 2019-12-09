@@ -119,7 +119,7 @@ class PageDao {
 	 * @param	bool	$private	(optional) True to get only private pages, false to get only non-private pages, null to get all pages. Null by default.
 	 * @return	array	List of associative arrays.
 	 */
-	public function getSubPages(int $id=0, ?int $excludeId=null, ?bool $private) : array {
+	public function getSubPages(int $id=0, ?int $excludeId=null, ?bool $private=null) : array {
 		$sql = "SELECT *
 			FROM Page
 			WHERE parentPageId = " . $this->_db->quote($id) . " ";
