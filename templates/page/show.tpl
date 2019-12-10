@@ -83,7 +83,7 @@
 											{if $item.type == 'h3'}
 												<a href="#{$item.id|escape}" class="nav-link smooth-scroll">{$item.value}</a>
 											{else}
-												{$index=$subindex}
+												{$index = $subindex - 1}
 												{break}
 											{/if}
 										{/for}
