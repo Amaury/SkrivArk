@@ -113,7 +113,7 @@ class Install extends \Temma\Web\Controller {
 		$allowreadonly = (($_POST['allowreadonly'] ?? 0) == 1) ? true : false;
 		$allowprivatepages = (($_POST['allowprivatepages'] ?? 0) == 1) ? true : false;
 		$darktheme = (($_POST['darktheme'] ?? 0) == 1) ? true : false;
-		$fontsize = (isset($_POST['fontsize']) && !empty($_POST['fontsize'])) ? intval($fontsize) : null;
+		$fontsize = (isset($_POST['fontsize']) && !empty($_POST['fontsize'])) ? intval($_POST['fontsize']) : null;
 		$disqus = trim($_POST['disqus'] ?? null);
 		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
 		$loglevel = trim($_POST['loglevel'] ?? null);
