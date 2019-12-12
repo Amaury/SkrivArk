@@ -110,8 +110,7 @@ header.page-title-bar h1 {
 }
 
 /* paragraphs*/
-#content p,
-#content li {
+#content {
 	font-size: 1.2rem;
 }
 

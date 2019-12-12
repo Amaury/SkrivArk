@@ -150,14 +150,20 @@ class InstallBo {
 	 * @param	bool	$allowPrivatePages	True to allow private pages.
 	 * @param	bool	$darkTheme		True to use dark theme.
 	 * @param	?int	$fontsize		Base font size.
+	 * @param	?string	$fontname		Text font name.
+	 * @param	?float	$textsize		Text font size.
+	 * @param	?string	$titlesfontname		Titles font name.
+	 * @param	?float	$titlessize		Titles font size.
 	 * @param	?string	$disqus			Disqus key.
 	 * @param	?string	$gAnalytics		Google Analytics key.
-	 * @param	string	$loglevel		Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
+	 * @param	?string	$loglevel		Log level ('DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR').
 	 */
 	public function updateConfigParameters(string $sitename, string $baseUrl, string $emailSender,
 	                                       bool $demomode, bool $searchable, bool $allowReadOnly,
 	                                       bool $allowPrivatePages, bool $darkTheme, ?int $fontsize,
-	                                       ?string $disqus, ?string $gAnalytics, string $loglevel) /* : void */ {
+	                                       ?string $fontname, ?float $textsize, ?string $titlesfontname,
+	                                       ?float $titlessize, ?string $disqus, ?string $gAnalytics, ?string $loglevel) /* : void */ {
+		$loglevel = (!$loglevel || !in_array($loglevel, ['DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR'])) ? 'WARN' : $loglevel;
 		// update temma.json
 		$temma = $this->_readConf();
 		$temma['loglevels']['Temma/Base'] = $loglevel;
@@ -173,6 +179,10 @@ class InstallBo {
 			'allowPrivatePages' => $allowPrivatePages,
 			'darkTheme'         => $darkTheme,
 			'fontsize'          => ($fontsize ?: null),
+			'fontname'          => ($fontname ?: null),
+			'textsize'          => ($textsize ?: null),
+			'titlesfontname'    => ($titlesfontname ?: null),
+			'titlessize'        => ($titlessize ?: null),
 			'disqus'            => $disqus,
 			'googleAnalytics'   => $gAnalytics,
 		];

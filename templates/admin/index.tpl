@@ -193,6 +193,71 @@ var adm = new function() {
 						<option value="24" {if $conf.fontsize == 24}selected{/if}>24 pixels</option>
 						<option value="26" {if $conf.fontsize == 26}selected{/if}>26 pixels</option>
 					</select>
+					<small class="form-text text-muted">Set the whole interface zoom level</small>
+				</div>
+				<div class="row">
+					<div class="col-12 col-lg-6">
+						<div class="form-group">
+							<label for="edit-fontname">Name of the text font</label>
+							<input type="text" id="edit-fontname" name="fontname" value="{$conf.fontname|escape}" class="form-control" />
+							<small class="form-text text-muted">Choose from the <a href="https://fonts.google.com/" target="_blank">Google Fonts</a> catalog, or leave empty to use the default font</small>
+						</div>
+						<div class="form-group">
+							<label>Text font size</label>
+							<select name="textsize" class="form-control">
+								<option value="0.5" {if $conf.textsize == 0.5}selected{/if}>0.5</option>
+								<option value="0.6" {if $conf.textsize == 0.6}selected{/if}>0.6</option>
+								<option value="0.7" {if $conf.textsize == 0.7}selected{/if}>0.7</option>
+								<option value="0.8" {if $conf.textsize == 0.8}selected{/if}>0.8</option>
+								<option value="0.9" {if $conf.textsize == 0.9}selected{/if}>0.9</option>
+								<option value="1" {if $conf.textsize == 1}selected{/if}>1</option>
+								<option value="1.1" {if $conf.textsize == 1.1}selected{/if}>1.1</option>
+								<option value="1.2" {if !$conf.textsize || $conf.textsize == 1.2}selected{/if}>1.2 (default size)</option>
+								<option value="1.3" {if $conf.textsize == 1.3}selected{/if}>1.3</option>
+								<option value="1.4" {if $conf.textsize == 1.4}selected{/if}>1.4</option>
+								<option value="1.5" {if $conf.textsize == 1.5}selected{/if}>1.5</option>
+								<option value="1.6" {if $conf.textsize == 1.6}selected{/if}>1.6</option>
+								<option value="1.7" {if $conf.textsize == 1.7}selected{/if}>1.7</option>
+								<option value="1.8" {if $conf.textsize == 1.8}selected{/if}>1.8</option>
+								<option value="1.9" {if $conf.textsize == 1.9}selected{/if}>1.9</option>
+								<option value="2" {if $conf.textsize == 2}selected{/if}>2</option>
+								<option value="2.5" {if $conf.textsize == 2.5}selected{/if}>2.5</option>
+								<option value="3" {if $conf.textsize == 3}selected{/if}>3</option>
+								<option value="3.5" {if $conf.textsize == 3.5}selected{/if}>3.5</option>
+								<option value="4" {if $conf.textsize == 4}selected{/if}>4</option>
+								<option value="5" {if $conf.textsize == 5}selected{/if}>5</option>
+							</select>
+							<small class="form-text text-muted">Multiplier of the base font size</small>
+						</div>
+					</div>
+					<div class="col-12 col-lg-6">
+						<div class="form-group">
+							<label for="edit-titlesfontname">Name of the titles font</label>
+							<input type="text" id="edit-titlesfontname" name="titlesfontname" value="{$conf.titlesfontname|escape}" class="form-control" />
+							<small class="form-text text-muted">Choose from the <a href="https://fonts.google.com/" target="_blank">Google Fonts</a> catalog, or leave empty to use the default font</small>
+						</div>
+						<div class="form-group">
+							<label>Titles font size</label>
+							<select name="titlessize" class="form-control">
+								<option value="1.25" {if $conf.titlessize == 1.25}selected{/if}>h1=1.25 h2=0.80 h3=0.65 h4=0.45</option>
+								<option value="1.5" {if $conf.titlessize == 1.5}selected{/if}>h1=1.5 h2=1 h3=0.75 h4=0.5</option>
+								<option value="1.75" {if $conf.titlessize == 1.75}selected{/if}>h1=1.75 h2=1.25 h3=1 h4=0.75</option>
+								<option value="2" {if $conf.titlessize == 2}selected{/if}>h1=2 h2=1.5 h3=1.25 h4=1</option>
+								<option value="2.25" {if $conf.titlessize == 2.25}selected{/if}>h1=2.25 h2=1.75 h3=1.5 h4=1.25</option>
+								<option value="2.5" {if !$conf.titlessize || $conf.titlessize == 2.5}selected{/if}>h1=2.5 h2=2 h3=1.75 h4=1.5 (default)</option>
+								<option value="2.75" {if $conf.titlessize == 2.75}selected{/if}>h1=2.75 h2=2.25 h3=2 h4=1.75</option>
+								<option value="3" {if $conf.titlessize == 3}selected{/if}>h1=3 h2=2.5 h3=2.25 h4=2</option>
+								<option value="3.5" {if $conf.titlessize == 3.5}selected{/if}>h1=3.5 h2=3 h3=2.75 h4=2.25</option>
+								<option value="4" {if $conf.titlessize == 4}selected{/if}>h1=4 h2=3.5 h3=3 h4=2.5</option>
+								<option value="5" {if $conf.titlessize == 5}selected{/if}>h1=5 h2=4 h3=3.5 h4=3</option>
+								<option value="6" {if $conf.titlessize == 6}selected{/if}>h1=6 h2=5 h3=4 h4=3.5</option>
+								<option value="8" {if $conf.titlessize == 8}selected{/if}>h1=8 h2=6.5 h3=5 h4=4</option>
+								<option value="10" {if $conf.titlessize == 10}selected{/if}>h1=10 h2=8 h3=6.5 h4=5</option>
+							</select>
+							<small class="form-text text-muted">Multiplier of the base font size</small>
+						</div>
+					</div>
+
 				</div>
 				<div class="form-group">
 					<label for="edit-disqus">Disqus ID</label>

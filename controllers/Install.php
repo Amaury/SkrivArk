@@ -97,10 +97,8 @@ class Install extends \Temma\Web\Controller {
 		$this['allowreadonly'] = $_GET['allowreadonly'] ?? null;
 		$this['allowprivatepages'] = $_GET['allowprivatePages'] ?? null;
 		$this['darktheme'] = $_GET['darktheme'] ?? null;
-		$this['fontsize'] = $_GET['fontsize'] ?? null;
 		$this['disqus'] = $_GET['disqus'] ?? null;
 		$this['googleanalytics'] = $_GET['googleanalytics'] ?? null;
-		$this['loglevel'] = $_GET['loglevel'] ?? null;
 	}
 	/** Store step 3 data. */
 	public function proceedStep3() {
@@ -114,23 +112,26 @@ class Install extends \Temma\Web\Controller {
 		$allowprivatepages = (($_POST['allowprivatepages'] ?? 0) == 1) ? true : false;
 		$darktheme = (($_POST['darktheme'] ?? 0) == 1) ? true : false;
 		$fontsize = (isset($_POST['fontsize']) && !empty($_POST['fontsize'])) ? intval($_POST['fontsize']) : null;
+		$fontname = trim($_POST['fontname'] ?? null);
+		$textsize = (isset($_POST['textsize']) && !empty($_POST['textsize'])) ? floatval($_POST['textsize']) : null;
+		$titlesfontname = trim($_POST['titlesfontname'] ?? null);
+		$titlessize = (isset($_POST['titlessize']) && !empty($_POST['titlessize'])) ? floatval($_POST['titlessize']) : null;
 		$disqus = trim($_POST['disqus'] ?? null);
 		$googleanalytics = trim($_POST['googleanalytics'] ?? null);
 		$loglevel = trim($_POST['loglevel'] ?? null);
 		// check params
-		if (empty($sitename) || empty($baseurl) || empty($emailsender) || !in_array($loglevel, ['DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR'])) {
+		if (empty($sitename) || empty($baseurl) || empty($emailsender) || ($loglevel && !in_array($loglevel, ['DEBUG', 'INFO', 'NOTE', 'WARN', 'ERROR']))) {
 			$this->redirect('/install/step3?paramerror=1&sitename=' . urlencode($sitename) .
 			                '&baseurl=' . urlencode($baseurl) . '&emailsender=' . urlencode($emailsender) .
 			                '&demomode=' . ($demomode ? 1 : 0) . '&searchable=' . ($searchable ? 1 : 0) .
 			                '&allowreadonly=' . ($allowreadonly ? 1 : 0) . '&allowprivatepages=' . ($allowprivatepages ? 1 : 0) .
-			                '&darktheme=' . ($darktheme ? 1 : 0) . '&fontsize=' . urlencode($fontsize) .
-			                '&disqus=' . urlencode($disqus) .  '&googleanalytics=' . urlencode($googleanalytics) .
-			                '&loglevel=' . urlencode($loglevel));
+			                '&darktheme=' . ($darktheme ? 1 : 0) . '&disqus=' . urlencode($disqus) .
+			                '&googleanalytics=' . urlencode($googleanalytics) . '&loglevel=' . urlencode($loglevel));
 			return (self::EXEC_HALT);
 		}
 		// update temma.json and manage demo mode
-		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $searchable, $allowreadonly,
-		                                                  $allowprivatepages, $darktheme, $fontsize, $disqus, $googleanalytics, $loglevel);
+		$this->_loader->installBo->updateConfigParameters($sitename, $baseurl, $emailsender, $demomode, $searchable, $allowreadonly, $allowprivatepages, $darktheme,
+		                                                  $fontsize, $fontname, $textsize, $titlesfontname, $titlessize, $disqus, $googleanalytics, $loglevel);
 		$this->redirect('/install/step4');
 	}
 	/** Step 4. */
