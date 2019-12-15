@@ -109,9 +109,14 @@ header.page-title-bar h1 {
 	content: none;
 }
 
-/* paragraphs*/
+/* paragraphs */
+.page-inner,
 #content {
 	font-size: 1.2rem;
+}
+.page-inner blockquote,
+#content blockquote {
+	font-size: inherit !important;
 }
 
 /* tables */

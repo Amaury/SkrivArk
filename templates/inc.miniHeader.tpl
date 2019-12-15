@@ -53,8 +53,7 @@
 					font-size: {$conf.fontsize}px;
 				{/if}
 			{literal}}{/literal}
-			{*literal}#content p, #content li, #content th, #content td {{/literal*}
-			{literal}#content {{/literal}
+			{literal}.page-inner, #content {{/literal}
 				{if $conf.fontname}
 					font-family: '{$conf.fontname}';
 				{/if}
