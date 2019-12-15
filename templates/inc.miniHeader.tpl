@@ -31,6 +31,12 @@
 	<script src="/js/ark.js"></script>
 	{* Disqus *}
 	{if $conf.disqus}
+		<script>
+			var disqus_config = function() {literal}{{/literal}
+				this.page.url = "{$URL}";
+				this.page.identifier = "{$page.id}";
+			{literal}}{/literal};
+		</script>
 		<script src="//{$conf.disqus}.disqus.com/embed.js" async></script>
 	{/if}
 	{* WYSIWYG editor *}
