@@ -107,7 +107,7 @@ class Loader extends \Temma\Utils\Registry {
 	 *				and its returned value will be stored as the value, and returned.
 	 * @return	\Temma\Base\Loader	The current object.
 	 */
-	public function set(string $key, /* mixed */ $data=null) : \Temma\Utils\Registry {
+	public function set(/* string */ $key, /* mixed */ $data=null) : \Temma\Utils\Registry {
 		$this->_data[$key] = $data;
 		return ($this);
 	}
@@ -126,7 +126,7 @@ class Loader extends \Temma\Utils\Registry {
 			if (isset($this->_data[$key]))
 				return ($this->_data[$key]);
 		}
-		if ($key instanceof \Temma\Base\Loadable) {
+		if (($interfaces = class_implements($key)) && isset($interfaces['Temma\Base\Loadable'])){
 			$this->_data[$key] = new $key($this);
 			if (isset($this->_data[$key]))
 				return ($this->_data[$key]);
