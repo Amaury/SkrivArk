@@ -61,6 +61,7 @@ class Page extends \Temma\Web\Controller {
 		$allowReadOnly = $this['conf']['allowReadOnly'] ?? false;
 		$allowPrivatePages = $this['conf']['allowPrivatePages'] ?? false;
 		$userId = $this['user']['id'] ?? 0;
+		$page = $subPages = null;
 		if ($id != 0) {
 			$page = $this->_loader->pageDao->get($id, null, $userId);
 			// check page
