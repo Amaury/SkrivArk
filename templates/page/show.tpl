@@ -11,7 +11,7 @@
 			<div class="page-inner">
 				{if !$page}
 					{* homepage *}
-					<div id="content" class="page-section">
+					<div id="content" class="page-section nocount">
 						{if $splashscreen}
 							{$splashscreen}
 						{else}
