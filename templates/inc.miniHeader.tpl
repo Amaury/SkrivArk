@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
+	{* tracking Google Analytics *}
+	{if $conf.googleAnalytics}
+		<script async src="https://www.googletagmanager.com/gtag/js?id={$conf.googleAnalytics}"></script>
+		<script>
+			window.dataLayer = window.dataLayer || [];
+			{literal}function gtag(){dataLayer.push(arguments);}{/literal}
+			gtag('js', new Date());
+			gtag('config', '{$conf.googleAnalytics}');
+		</script>
+	{/if}
 	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><!-- End Required meta tags -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 	<title>{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}</title>
 	<meta property="og:title" content="{if $conf.sitename}{$conf.sitename|escape}{else}SkrivArk{/if}{if $page}: {$page.title|escape}{/if}">
 	{if $conf.sitename}
@@ -11,7 +21,7 @@
 	{* jQuery *}
 	<script src="/js/jquery.min.js"></script>
 	{* Google font *}
-	<link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600" rel="stylesheet"><!-- End Google font -->
+	<link href="https://fonts.googleapis.com/css?family=Fira+Sans:400,500,600" rel="stylesheet">
 	{* Favicons *}
 	{*<link rel="icon" type="image/png" href="/favicon.png" />*}
 	<link rel="shortcut icon" href="/favicon.ico">
