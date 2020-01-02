@@ -113,6 +113,7 @@ class Session implements \ArrayAccess {
 				$newSessionId = $this->_sessionId;
 			}
 		}
+		$this->_sessionId = $newSessionId;
 		// compute expiration date
 		if (!isset($this->_data))
 			$duration = self::SHORT_DURATION;
